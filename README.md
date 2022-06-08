@@ -1,2 +1,2 @@
 # webpctv
-android tv of webpc
+android tv for webpc
