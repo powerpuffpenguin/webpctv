@@ -1,18 +1,18 @@
 import 'package:dio/dio.dart';
 
 import './rpc.dart';
-// import './session.dart';
-// import './categories.dart';
 
 class Client extends RpcClient {
+  final String url;
   Client({
-    required String baseUrl,
+    required this.url,
     required String name,
     required String password,
+    required List<int> devices,
   }) : super(
-          dio: Dio()
-            ..options.baseUrl = baseUrl.endsWith('/') ? baseUrl : baseUrl + '/',
+          dio: Dio()..options.baseUrl = url.endsWith('/') ? url : url + '/',
           name: name,
           password: password,
+          devices: devices,
         );
 }

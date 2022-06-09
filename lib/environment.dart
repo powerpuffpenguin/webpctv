@@ -2,6 +2,7 @@ class MyEnvironment {
   MyEnvironment._();
 
   static const String applicationLegalese = "© 2022 The TV for WebPC";
+  static const String appName = "WebPC TV";
   static String get packageName => "com.king011.webpctv";
   static String get playStore =>
       'https://play.google.com/store/apps/details?id=$packageName';

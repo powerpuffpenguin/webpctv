@@ -105,21 +105,31 @@ abstract class MyState<T extends StatefulWidget> extends UIState<T> {
     );
   }
 
+  BuildContext? _scaffold;
+  openDrawer() {
+    if (_scaffold != null) {
+      Scaffold.of(_scaffold!).openDrawer();
+    }
+  }
+
   @protected
   Widget openDrawerOfAppBar(BuildContext context, {dynamic data}) {
     return FocusScope(
       node: focusScopeNode,
       child: Builder(
-        builder: (context) => IconButton(
-          focusNode: createFocusNode(
-            MyFocusNode.openDrawer,
-            data: data,
-          ),
-          icon: const Icon(Icons.menu),
-          iconSize: 24,
-          onPressed: () => Scaffold.of(context).openDrawer(),
-          tooltip: MaterialLocalizations.of(context).openAppDrawerTooltip,
-        ),
+        builder: (context) {
+          _scaffold = context;
+          return IconButton(
+            focusNode: createFocusNode(
+              MyFocusNode.openDrawer,
+              data: data,
+            ),
+            icon: const Icon(Icons.menu),
+            iconSize: 24,
+            onPressed: () => Scaffold.of(context).openDrawer(),
+            tooltip: MaterialLocalizations.of(context).openAppDrawerTooltip,
+          );
+        },
       ),
     );
   }

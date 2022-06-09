@@ -4,7 +4,9 @@ import 'package:flutter/services.dart';
 
 import 'package:webpctv/db/db.dart';
 import 'package:webpctv/environment.dart';
+import 'package:webpctv/pages/home/home.dart';
 import 'package:webpctv/pages/load/add.dart';
+import 'package:webpctv/rpc/webapi/client.dart';
 import 'package:webpctv/widget/state.dart';
 
 class _FocusID {
@@ -33,28 +35,31 @@ abstract class _State extends MyState<MyLoadPage> {
       checkAlive();
       var account = await helper.getById(1);
       checkAlive();
-      if (account == null) {
+      final url = account?.url ?? '';
+      if (account == null ||
+          account.devices.isEmpty ||
+          (!url.startsWith('http://') && !url.startsWith('https://'))) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
-            builder: (_) => const MyAddPage(),
+            builder: (_) => MyAddPage(
+              account: account,
+            ),
           ),
         );
-      } else {}
-      // Navigator.of(context).pushReplacement(
-      //   MaterialPageRoute(
-      //     builder: (_) => MyHomePage(
-      //       client: Client(
-      //         account: account!.id,
-      //         baseUrl: account.url,
-      //         name: account.name,
-      //         password: account.password,
-      //       ),
-      //     ),
-      //   ),
-      // );
-      // return;
-
-      // Navigator.of(context).pushReplacementNamed(MyRoutes.firstAdd);
+      } else {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (_) => MyHomePage(
+              client: Client(
+                url: account.url,
+                name: account.name,
+                password: account.password,
+                devices: account.devices,
+              ),
+            ),
+          ),
+        );
+      }
     } catch (e) {
       aliveSetState(() {
         _error = e;

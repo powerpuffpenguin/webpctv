@@ -2,8 +2,11 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:king011_icons/king011_icons.dart';
+import 'package:sqflite/sqlite_api.dart';
 import 'package:webpctv/db/data/account.dart';
+import 'package:webpctv/db/db.dart';
 import 'package:webpctv/environment.dart';
+import 'package:webpctv/pages/home/home.dart';
 import 'package:webpctv/rpc/webapi/client.dart';
 import 'package:webpctv/widget/spin.dart';
 import 'package:webpctv/widget/state.dart';
@@ -14,6 +17,7 @@ class _FocusID {
   static const name = 'name';
   static const password = 'password';
   static const submit = 'submit';
+  static const devices = 'devices';
 }
 
 class MyAddPage extends StatefulWidget {
@@ -30,6 +34,7 @@ abstract class _State extends MyState<MyAddPage> {
   final _urlController = TextEditingController();
   final _nameController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _devicesController = TextEditingController();
 
   final _form = GlobalKey<FormState>();
 
@@ -40,12 +45,14 @@ abstract class _State extends MyState<MyAddPage> {
     final url = _urlController.text;
     final name = _nameController.text;
     final password = _passwordController.text;
+    final devices = paraseListInt(_devicesController.text);
 
     if (widget.account != null) {
       final account = widget.account!;
       if (account.url == url &&
           account.name == name &&
-          account.password == password) {
+          account.password == password &&
+          account.devices.join(',') == devices.join(',')) {
         Navigator.of(context).pop();
         return;
       }
@@ -61,51 +68,36 @@ abstract class _State extends MyState<MyAddPage> {
 
       // verify
       final client = Client(
-        baseUrl: url,
+        url: url,
         name: name,
         password: password,
+        devices: devices,
       );
       await client.sigin(cancelToken: _cancelToken);
       checkAlive();
-
-      //     final status = await client.getStatus(cancelToken: _cancelToken);
-      //     checkAlive();
-      //     client.status = status;
-      //     // save db
-      //     final helper = (await DB.helpers).account;
-      //     checkAlive();
-      //     final account = Account(id: 0, url: url, name: name, password: password);
-      //     if (widget.account == null) {
-      //       // add
-      //       final id = await helper.add(account);
-      //       debugPrint('insert id: $id');
-      //       checkAlive();
-      //       account.id = id;
-      //       client.account = id;
-      //     } else {
-      //       // edit
-      //       account.id = widget.account!.id;
-      //       await helper.updateById(
-      //         account.id,
-      //         account.toMap()..remove(AccountHelper.columnID),
-      //       );
-      //       checkAlive();
-      //     }
-      //     if (widget.push) {
-      //       MySettings.instance.setAccount(account.id);
-      //       Navigator.of(context).pushReplacement(
-      //         MaterialPageRoute(
-      //           builder: (_) => MyHomePage(
-      //             client: client,
-      //           ),
-      //         ),
-      //       );
-      //     } else {
-      //       Navigator.of(context).pop(account);
-      //     }
-      aliveSetState(() {
-        disabled = false;
-      });
+      // save db
+      final helper = (await DB.helpers).account;
+      checkAlive();
+      final account = Account(
+        id: 1,
+        url: url,
+        name: name,
+        password: password,
+        devices: devices,
+      );
+      await helper.add(
+        account,
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+      checkAlive();
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(
+          builder: (_) => MyHomePage(
+            client: client,
+          ),
+        ),
+        (router) => false,
+      );
     } catch (e) {
       aliveSetState(() {
         disabled = false;
@@ -124,6 +116,7 @@ class _MyAddPageState extends _State with _KeyboardComponent {
       _urlController.text = account.url;
       _nameController.text = account.name;
       _passwordController.text = account.password;
+      _devicesController.text = account.devices.join(',');
     }
     if (!_urlController.text.startsWith('http://') &&
         !_urlController.text.startsWith('https://')) {
@@ -138,6 +131,11 @@ class _MyAddPageState extends _State with _KeyboardComponent {
       }
     } else if (_passwordController.text.isEmpty) {
       final focus = createFocusNode(_FocusID.password);
+      if (focus.canRequestFocus) {
+        focus.requestFocus();
+      }
+    } else if (_devicesController.text.isEmpty) {
+      final focus = createFocusNode(_FocusID.devices);
       if (focus.canRequestFocus) {
         focus.requestFocus();
       }
@@ -163,7 +161,7 @@ class _MyAddPageState extends _State with _KeyboardComponent {
     return Scaffold(
       appBar: AppBar(
         leading: backOfAppBar(context, disabled: disabled),
-        title: const Text('Server Metadata '),
+        title: const Text('Server Metadata'),
       ),
       body: Form(
         key: _form,
@@ -207,6 +205,20 @@ class _MyAddPageState extends _State with _KeyboardComponent {
                 decoration: const InputDecoration(
                   prefixIcon: Icon(Icons.password),
                   label: Text('Password'),
+                ),
+                onEditingComplete: () => setFocus(_FocusID.devices),
+              ),
+            ),
+            FocusScope(
+              node: focusScopeNode,
+              child: TextFormField(
+                enabled: enabled,
+                controller: _devicesController,
+                focusNode: createFocusNode(_FocusID.devices),
+                keyboardType: TextInputType.text,
+                decoration: const InputDecoration(
+                  prefixIcon: Icon(Icons.device_hub),
+                  label: Text('Devices'),
                 ),
                 onEditingComplete: () => setFocus(_FocusID.submit),
               ),
@@ -270,6 +282,9 @@ mixin _KeyboardComponent on _State {
         setFocus(_FocusID.password, focused: focused.focusNode);
         break;
       case _FocusID.password:
+        setFocus(_FocusID.devices, focused: focused.focusNode);
+        break;
+      case _FocusID.devices:
         setFocus(_FocusID.submit, focused: focused.focusNode);
         break;
       case _FocusID.submit:
@@ -283,6 +298,7 @@ mixin _KeyboardComponent on _State {
       case _FocusID.url:
       case _FocusID.name:
       case _FocusID.password:
+      case _FocusID.devices:
         _nextFocus(focused);
         break;
       case _FocusID.submit:

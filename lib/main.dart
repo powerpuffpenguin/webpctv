@@ -1,3 +1,4 @@
+import 'package:bot_toast/bot_toast.dart';
 import 'package:flutter/material.dart';
 import 'package:webpctv/pages/load/load.dart';
 import 'package:webpctv/service/key_event_service.dart';
@@ -31,6 +32,10 @@ class _MyAppState extends State<MyApp> {
           primarySwatch: Colors.blue,
         ),
         home: const MyLoadPage(),
+        builder: BotToastInit(),
+        navigatorObservers: [
+          BotToastNavigatorObserver(),
+        ],
       ),
     );
   }

@@ -42,6 +42,8 @@ dependencies:
   crypto: ^3.0.1
   ppg_ui: ^0.0.2
   rxdart: ^0.27.3
+  url_launcher: ^6.0.17
+  bot_toast: ^4.0.1
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -65,9 +67,8 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
-  #   - images/a_dot_ham.jpeg
+  assets:
+    - assets/webpctv.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.
