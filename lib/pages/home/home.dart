@@ -74,11 +74,9 @@ class _MyHomePageState extends _State with _KeyboardComponent {
 mixin _KeyboardComponent on _State {
   void onKeyUp(KeyEvent evt) {
     if (evt.logicalKey == LogicalKeyboardKey.select) {
-      if (enabled) {
-        final focused = focusedNode();
-        if (focused != null) {
-          _selectFocused(focused);
-        }
+      final focused = focusedNode();
+      if (focused != null) {
+        _selectFocused(focused);
       }
     }
   }

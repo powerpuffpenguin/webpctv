@@ -132,7 +132,7 @@ abstract class RpcClient {
     return completer.future;
   }
 
-  Future<Token> token() async {
+  Future<Token> getToken() async {
     var completer = _completer;
     if (completer != null) {
       return completer.future;
@@ -140,7 +140,7 @@ abstract class RpcClient {
 
     var result = _token;
     if (result == null) {
-      throw Exception('token null');
+      return refreshToken();
     } else if (result.deleted) {
       return refreshToken();
     }

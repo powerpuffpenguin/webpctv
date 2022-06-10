@@ -219,6 +219,7 @@ class _MyAddPageState extends _State with _KeyboardComponent {
                 decoration: const InputDecoration(
                   prefixIcon: Icon(Icons.device_hub),
                   label: Text('Devices'),
+                  hintText: '0,1,2,3',
                 ),
                 onEditingComplete: () => setFocus(_FocusID.submit),
               ),

@@ -1,8 +1,10 @@
 import 'package:dio/dio.dart';
+import 'package:webpctv/rpc/webapi/fs.dart';
+import 'package:webpctv/rpc/webapi/session.dart';
 
 import './rpc.dart';
 
-class Client extends RpcClient {
+class Client extends RpcClient with FileSystem, Session {
   final String url;
   Client({
     required this.url,

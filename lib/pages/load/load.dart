@@ -73,7 +73,11 @@ class _MyLoadPageState extends _State with _KeyboardComponent {
   @override
   void initState() {
     super.initState();
-    Future.value().then((value) => _refish());
+    Future.value().then((value) {
+      if (isNotClosed) {
+        _refish();
+      }
+    });
     listenKeyUp(onKeyUp);
   }
 
