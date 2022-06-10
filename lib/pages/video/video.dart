@@ -1,11 +1,16 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:video_player/video_player.dart';
 import 'package:webpctv/rpc/webapi/client.dart';
 import 'package:webpctv/rpc/webapi/fs.dart';
-import 'package:webpctv/widget/spin.dart';
 import 'package:webpctv/widget/state.dart';
 import 'package:path/path.dart' as path;
+
+enum Mode {
+  None,
+}
 
 class MyVideoPage extends StatefulWidget {
   const MyVideoPage({
@@ -59,9 +64,48 @@ abstract class _State extends MyState<MyVideoPage> {
   List<Source> get videos => widget.videos;
   String get access => widget.access;
   final cancelToken = CancelToken();
+  late VideoPlayerController playerController;
+  Mode mode = Mode.None;
+  getURL(String name) {
+    final baseUrl = client.dio.options.baseUrl;
+    final query = Uri(queryParameters: <String, dynamic>{
+      'slave_id': device.toString(),
+      'root': root,
+      'path': getPath(name),
+      'access_token': access,
+    }).query;
+    return '${baseUrl}api/forward/v1/fs/download_access?$query';
+  }
+
+  bool showController = false;
+  @override
+  void initState() {
+    super.initState();
+
+    playerController = VideoPlayerController.network(
+      getURL(name),
+      videoPlayerOptions: VideoPlayerOptions(
+        mixWithOthers: true,
+      ),
+    )
+      ..initialize().then((_) {
+        playerController.play();
+      })
+      ..addListener(() {
+        if (isNotClosed) {
+          _listener();
+        }
+      });
+  }
+
+  _listener() {
+    setState(() {});
+  }
+
   @override
   void dispose() {
     cancelToken.cancel();
+    playerController.dispose();
     super.dispose();
   }
 
@@ -86,31 +130,96 @@ class _MyVideoPageState extends _State with _KeyboardComponent {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: backOfAppBar(context),
-        title: Text('$device $root $fullpath'),
+    return WillPopScope(
+      onWillPop: () async {
+        if (showController && playerController.value.isInitialized) {
+          setState(() {
+            showController = false;
+          });
+          return false;
+        }
+        return true;
+      },
+      child: Scaffold(
+        body: Container(
+          alignment: Alignment.center,
+          color: Colors.black,
+          child: playerController.value.isInitialized
+              ? _buildVideo(context)
+              : _buildLoading(context),
+        ),
       ),
-      floatingActionButton: enabled ? null : createSpinFloating(),
+    );
+  }
+
+  Widget _buildLoading(BuildContext context) {
+    return const Center(
+      child: SizedBox(
+        height: 60,
+        child: FittedBox(
+          child: CupertinoActivityIndicator(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVideo(BuildContext context) {
+    return Container(
+      alignment: Alignment.center,
+      color: Colors.black,
+      child: AspectRatio(
+        aspectRatio: playerController.value.aspectRatio,
+        child: Stack(
+          alignment: Alignment.bottomCenter,
+          children: <Widget>[
+            VideoPlayer(playerController),
+            showController
+                ? VideoProgressIndicator(playerController, allowScrubbing: true)
+                : Container(),
+          ],
+        ),
+      ),
     );
   }
 }
 
 mixin _KeyboardComponent on _State {
   void onKeyUp(KeyEvent evt) {
+    final value = playerController.value;
     if (evt.logicalKey == LogicalKeyboardKey.select) {
-      final focused = focusedNode();
-      if (focused != null) {
-        _selectFocused(focused);
+      if (value.isInitialized) {
+        _selected(value);
+      }
+    } else if (evt.logicalKey == LogicalKeyboardKey.arrowDown ||
+        evt.logicalKey == LogicalKeyboardKey.arrowUp) {
+      if (playerController.value.isInitialized) {
+        if (showController) {
+        } else {
+          setState(() {
+            showController = true;
+          });
+        }
       }
     }
   }
 
-  _selectFocused(MyFocusNode focused) {
-    final id = focused.id;
-    if (id == MyFocusNode.arrowBack) {
-      Navigator.of(context).pop();
+  _selected(VideoPlayerValue value) {
+    if (!showController) {
+      if (value.isPlaying) {
+        playerController.pause();
+      } else {
+        playerController.play();
+      }
       return;
+    }
+    switch (mode) {
+      case Mode.None:
+        if (value.isPlaying) {
+          playerController.pause();
+        } else {
+          playerController.play();
+        }
+        break;
     }
   }
 }
