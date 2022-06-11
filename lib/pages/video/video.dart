@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -6,7 +8,6 @@ import 'package:video_player/video_player.dart';
 import 'package:webpctv/db/settings.dart';
 import 'package:webpctv/rpc/webapi/client.dart';
 import 'package:webpctv/widget/state.dart';
-
 import './controller.dart';
 import './values.dart';
 
@@ -162,6 +163,38 @@ abstract class _State extends MyState<MyVideoPage> {
     }
   }
 
+  _playIndex(int i) async {
+    if (_replay) {
+      return;
+    }
+    _replay = true;
+    try {
+      if (i >= 0 && i < videos.length) {
+        final source = videos[i];
+        if (source != ui.source) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (_) => MyVideoPage(
+                client: client,
+                device: device,
+                root: root,
+                path: fullpath,
+                source: source,
+                videos: videos,
+                access: access,
+                showController: ui.show,
+              ),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint("_playIndex $i err: $e");
+    } finally {
+      _replay = false;
+    }
+  }
+
   _playNext() async {
     if (_replay) {
       return;
@@ -180,6 +213,7 @@ abstract class _State extends MyState<MyVideoPage> {
                 source: videos[i + 1],
                 videos: videos,
                 access: access,
+                showController: ui.show,
               ),
             ),
           );
@@ -215,25 +249,56 @@ abstract class _State extends MyState<MyVideoPage> {
     }
   }
 
-  seekPlay(bool right) {
+  Duration _seekTo = Duration.zero;
+  bool _seeking = false;
+  void seekPlay(bool right) {
     final value = playerController.value;
-    if (value.isInitialized) {
-      final current = value.position;
-      var position = current;
-      const duration = Duration(seconds: 10);
-      if (right) {
-        position += duration;
-        if (position >= value.duration) {
-          position = value.duration;
-        }
-      } else {
-        position -= duration;
-        if (position < const Duration()) {
-          position = const Duration();
-        }
+    if (!value.isInitialized) {
+      return;
+    }
+    if (right) {
+      _seekTo += const Duration(seconds: 10);
+    } else {
+      _seekTo -= const Duration(seconds: 10);
+    }
+    if (_seeking || _seekTo == Duration.zero) {
+      return;
+    }
+    final position = value.position;
+    final to = position + _seekTo;
+    _seekTo = Duration.zero;
+    _seekToDuration(to);
+  }
+
+  void _seekToDuration(Duration to) async {
+    _seeking = true;
+    try {
+      final value = playerController.value;
+      if (to < Duration.zero) {
+        to = Duration.zero;
+      } else if (to > value.duration) {
+        to = value.duration;
       }
-      if (position != current) {
-        playerController.seekTo(position);
+      final diff = to - value.position;
+      if (diff < const Duration(seconds: 1) &&
+          diff > const Duration(seconds: -1)) {
+        return;
+      }
+      await playerController.seekTo(to);
+    } catch (e) {
+      if (isNotClosed) {
+        debugPrint("seekTo $e");
+      }
+    } finally {
+      if (isNotClosed) {
+        if (_seekTo == Duration.zero) {
+          _seeking = false;
+        } else {
+          final position = playerController.value.position;
+          final to = position + _seekTo;
+          _seekTo = Duration.zero;
+          _seekToDuration(to);
+        }
       }
     }
   }
@@ -345,6 +410,7 @@ mixin _KeyboardComponent on _State {
         togglePlay();
         break;
       case Mode.playlist:
+        _playIndex(ui.selected);
         break;
       case Mode.play:
         break;
@@ -359,6 +425,9 @@ mixin _KeyboardComponent on _State {
         seekPlay(right);
         break;
       case Mode.playlist:
+        if (ui.changeSelected(right)) {
+          setState(() {});
+        }
         break;
       case Mode.play:
         setState(() {

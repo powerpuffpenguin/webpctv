@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
+import 'package:webpctv/pages/video/label.dart';
 import './values.dart';
 import 'package:path/path.dart' as path;
 
@@ -25,23 +26,30 @@ class _MyControllerWidgetState extends State<MyControllerWidget> {
     }
     final children = <Widget>[];
     final value = controller.value;
-
-    children.add(
-      Container(
-        padding: const EdgeInsets.only(top: 10, left: 10),
-        alignment: Alignment.topLeft,
-        child: Text(
-          ui.mode.name,
-          style: const TextStyle(
-            color: Colors.white,
+    children.addAll(
+      <Widget>[
+        Container(
+          padding: const EdgeInsets.only(top: 10, left: 10),
+          alignment: Alignment.topLeft,
+          child: MyLabelWidget(
+            label: ui.mode.name,
           ),
         ),
-      ),
+        Container(
+          padding: const EdgeInsets.only(top: 10, left: 10),
+          alignment: Alignment.topRight,
+          child: MyLabelWidget(
+            label: ui.source.name,
+            fontSize: 24,
+          ),
+        ),
+      ],
     );
     switch (ui.mode) {
       case Mode.none:
         break;
       case Mode.playlist:
+        children.add(_buildPlaylist(context));
         break;
       case Mode.caption:
         if (ui.source.captions.isNotEmpty) {
@@ -51,14 +59,9 @@ class _MyControllerWidgetState extends State<MyControllerWidget> {
       case Mode.play:
         children.add(
           Container(
-            padding: const EdgeInsets.only(top: 40, left: 20),
+            padding: const EdgeInsets.only(top: 60, left: 40),
             alignment: Alignment.topLeft,
-            child: Text(
-              ui.play.name,
-              style: const TextStyle(
-                color: Colors.white,
-              ),
-            ),
+            child: MyLabelWidget(label: ui.play.name),
           ),
         );
         break;
@@ -69,11 +72,10 @@ class _MyControllerWidgetState extends State<MyControllerWidget> {
         Container(
           padding: const EdgeInsets.only(bottom: 10, right: 10),
           alignment: Alignment.bottomRight,
-          child: Text(
-            '${durationToString(value.position)} / ${durationToString(value.duration)}',
-            style: const TextStyle(
-              color: Colors.white,
-            ),
+          child: MyLabelWidget(
+            label:
+                '${durationToString(value.position)} / ${durationToString(value.duration)}',
+            fontSize: 18,
           ),
         ),
       ]);
@@ -84,15 +86,15 @@ class _MyControllerWidgetState extends State<MyControllerWidget> {
   }
 
   Widget _buildCaptions(BuildContext context) {
+    const padding = EdgeInsets.only(top: 60, left: 40);
+    const fontSize = 24.0;
     if (ui.caption < 0) {
       return Container(
-        padding: const EdgeInsets.only(top: 40, left: 20),
+        padding: padding,
         alignment: Alignment.topLeft,
-        child: const Text(
-          'close',
-          style: TextStyle(
-            color: Colors.white,
-          ),
+        child: const MyLabelWidget(
+          label: 'close',
+          fontSize: fontSize,
         ),
       );
     }
@@ -115,12 +117,52 @@ class _MyControllerWidgetState extends State<MyControllerWidget> {
       name = '$i';
     }
     return Container(
-      padding: const EdgeInsets.only(top: 40, left: 20),
+      padding: padding,
       alignment: Alignment.topLeft,
-      child: Text(
-        name,
-        style: const TextStyle(
-          color: Colors.white,
+      child: MyLabelWidget(
+        label: name,
+        fontSize: fontSize,
+      ),
+    );
+  }
+
+  Widget _buildPlaylist(BuildContext context) {
+    var start = ui.selected;
+    var size = 1;
+    final max = ui.videos.length - 1;
+    var end = start;
+    while (size != 3) {
+      if (start > 0) {
+        start--;
+        size++;
+        if (size == 3) {
+          break;
+        }
+      }
+      if (end < max) {
+        end++;
+        size++;
+      }
+    }
+
+    final children = <Widget>[];
+    for (var i = start; i <= end; i++) {
+      children.add(MyLabelWidget(
+        label: path.basenameWithoutExtension(ui.videos[i].name),
+        fontSize: 24,
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        color: i != ui.selected ? null : Theme.of(context).primaryColor,
+      ));
+    }
+    return Container(
+      padding: const EdgeInsets.only(top: 60, left: 20, right: 20),
+      alignment: Alignment.topCenter,
+      child: SizedBox(
+        height: 34,
+        child: Wrap(
+          alignment: WrapAlignment.center,
+          clipBehavior: Clip.hardEdge,
+          children: children,
         ),
       ),
     );

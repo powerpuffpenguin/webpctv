@@ -20,18 +20,54 @@ enum PlayMode {
 }
 
 class UI {
-  bool show;
+  bool _show;
+  bool get show => _show;
+  set show(bool v) {
+    if (v == _show) {
+      return;
+    }
+    _show = v;
+    if (v) {
+      resetSelected();
+    }
+  }
+
   Mode mode = Mode.none;
   PlayMode play = PlayMode.list;
   final List<Source> videos;
   int caption = 0;
   final Source source;
+  int selected = 0;
 
   UI({
-    required this.show,
+    required bool show,
     required this.source,
     required this.videos,
-  });
+  }) : _show = show {
+    resetSelected();
+  }
+  void resetSelected() {
+    for (var i = 0; i < videos.length; i++) {
+      if (videos[i] == source) {
+        selected = i;
+      }
+    }
+  }
+
+  bool changeSelected(bool right) {
+    if (right) {
+      final max = videos.length - 1;
+      if (selected <= max) {
+        selected++;
+      }
+      return true;
+    } else if (selected > 0) {
+      selected--;
+      return true;
+    }
+    return false;
+  }
+
   int changeMode(bool down) {
     const values = Mode.values;
     final last = values.length - 1;
