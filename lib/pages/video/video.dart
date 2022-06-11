@@ -10,9 +10,10 @@ import 'package:path/path.dart' as path;
 
 enum Mode {
   none,
+  playlist,
+  caption,
   // list loop single
   play,
-  caption,
 }
 
 class MyVideoPage extends StatefulWidget {
@@ -116,7 +117,21 @@ abstract class _State extends MyState<MyVideoPage> {
     return fullpath.endsWith('/') ? '$fullpath$name' : '$fullpath/$name';
   }
 
-  seekPlay(bool right) {}
+  togglePlay() {
+    final value = playerController.value;
+    if (value.isInitialized) {
+      if (value.isPlaying) {
+        playerController.pause();
+      } else {
+        playerController.play();
+      }
+    }
+  }
+
+  seekPlay(bool right) {
+    final value = playerController.value;
+    if (value.isInitialized) {}
+  }
 }
 
 class _MyVideoPageState extends _State with _KeyboardComponent {
@@ -137,7 +152,7 @@ class _MyVideoPageState extends _State with _KeyboardComponent {
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        if (showController && playerController.value.isInitialized) {
+        if (showController) {
           setState(() {
             showController = false;
           });
@@ -197,61 +212,61 @@ mixin _KeyboardComponent on _State {
   void onKeyUp(KeyEvent evt) {
     final value = playerController.value;
     if (evt.logicalKey == LogicalKeyboardKey.select) {
-      if (value.isInitialized) {
-        _selected(value);
-      }
+      _selected(value);
     } else if (evt.logicalKey == LogicalKeyboardKey.arrowDown ||
         evt.logicalKey == LogicalKeyboardKey.arrowUp) {
-      if (value.isInitialized) {
-        if (showController) {
-          _changeMode();
-        } else {
-          setState(() {
-            showController = true;
-          });
-        }
+      if (showController) {
+        _changeMode(evt.logicalKey == LogicalKeyboardKey.arrowDown);
+      } else {
+        setState(() {
+          showController = true;
+        });
       }
     } else if (evt.logicalKey == LogicalKeyboardKey.arrowLeft ||
         evt.logicalKey == LogicalKeyboardKey.arrowRight) {
-      if (value.isInitialized) {
-        if (showController) {
-          _changeValue(evt.logicalKey == LogicalKeyboardKey.arrowRight);
-        } else {
-          seekPlay(evt.logicalKey == LogicalKeyboardKey.arrowRight);
-        }
+      if (showController) {
+        _changeValue(evt.logicalKey == LogicalKeyboardKey.arrowRight);
+      } else {
+        seekPlay(evt.logicalKey == LogicalKeyboardKey.arrowRight);
       }
     }
   }
 
-  _changeMode() {
+  _changeMode(bool down) {
     setState(() {
       const values = Mode.values;
-      for (var i = 0; i < values.length - 1; i++) {
-        if (mode == values[i]) {
-          mode = values[i + 1];
-          return;
+      final last = values.length - 1;
+      if (down) {
+        for (var i = 0; i < last; i++) {
+          if (mode == values[i]) {
+            mode = values[i + 1];
+            return;
+          }
         }
+        mode = values[0];
+      } else {
+        for (var i = last; i > 0; i--) {
+          if (mode == values[i]) {
+            mode = values[i - 1];
+            return;
+          }
+        }
+        mode = values[last];
       }
-      mode = values[0];
     });
   }
 
   _selected(VideoPlayerValue value) {
     if (!showController) {
-      if (value.isPlaying) {
-        playerController.pause();
-      } else {
-        playerController.play();
-      }
+      togglePlay();
       return;
     }
+    // controller
     switch (mode) {
       case Mode.none:
-        if (value.isPlaying) {
-          playerController.pause();
-        } else {
-          playerController.play();
-        }
+        togglePlay();
+        break;
+      case Mode.playlist:
         break;
       case Mode.play:
         break;
