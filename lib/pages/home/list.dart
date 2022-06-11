@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:webpctv/pages/error.dart';
+import 'package:webpctv/pages/video/values.dart';
 import 'package:webpctv/pages/video/video.dart';
 import 'package:webpctv/rpc/webapi/client.dart';
 import 'package:webpctv/rpc/webapi/fs.dart';
@@ -59,6 +60,16 @@ abstract class _State extends MyState<MyListPage> {
   }
 
   _openVide(String name) async {
+    Source? source;
+    for (var item in videos) {
+      if (item.name == name) {
+        source = item;
+        break;
+      }
+    }
+    if (source == null) {
+      return;
+    }
     setState(() {
       disabled = true;
     });
@@ -74,7 +85,7 @@ abstract class _State extends MyState<MyListPage> {
               device: device,
               root: root,
               path: fullpath,
-              name: name,
+              source: source!,
               videos: videos,
               access: access,
             ),
@@ -141,7 +152,9 @@ class _MyListPageState extends _State with _KeyboardComponent {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: backOfAppBar(context),
+        // leading: backOfAppBar(context),
+        leading: Container(),
+        leadingWidth: 0,
         title: Text('$device $root $fullpath'),
       ),
       body: ListView(

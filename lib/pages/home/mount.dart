@@ -79,7 +79,9 @@ class _MyMountPageState extends _State with _KeyboardComponent {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: backOfAppBar(context),
+        // leading: backOfAppBar(context),
+        leading: Container(),
+        leadingWidth: 0,
         title: Text('$device'),
       ),
       body: ListView(

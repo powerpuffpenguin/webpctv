@@ -45,6 +45,7 @@ dependencies:
   url_launcher: ^6.0.17
   bot_toast: ^4.0.1
   path: ^1.8.0
+  shared_preferences: ^2.0.9
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -41,4 +41,58 @@ mixin Session on RpcClient {
       rethrow;
     }
   }
+
+  Future<String> download(
+    int device,
+    String root,
+    String path, {
+    CancelToken? cancelToken,
+  }) async {
+    final token = await getToken();
+    return _download(token, device, root, path, cancelToken: cancelToken);
+  }
+
+  Future<String> _download(
+    Token token,
+    int device,
+    String root,
+    String path, {
+    CancelToken? cancelToken,
+    bool retry = true,
+  }) async {
+    try {
+      final resp = await dio.get(
+        'api/forward/v1/fs/download',
+        queryParameters: {
+          'slave_id': device,
+          'root': root,
+          'path': path,
+        },
+        cancelToken: cancelToken,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer ${token.access}',
+          },
+          responseType: ResponseType.plain,
+        ),
+      );
+      return resp.data;
+    } on DioError catch (e) {
+      if (retry && (e.response?.statusCode ?? 0) == 401) {
+        try {
+          token = await refreshToken(token: token);
+          return _downloadAccess(
+            token,
+            device,
+            cancelToken: cancelToken,
+            retry: false,
+          );
+        } catch (err) {
+          debugPrint("retry $err");
+          throw e;
+        }
+      }
+      rethrow;
+    }
+  }
 }

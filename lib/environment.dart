@@ -14,4 +14,7 @@ class MyEnvironment {
 
   static const double viewPadding = 14;
   static const double spacing = 10;
+  static String durationToString(Duration duration) => duration.inDays > 0
+      ? "${duration.inDays} days ${duration.inHours.remainder(24).toString().padLeft(2, '0')}:${duration.inMinutes.remainder(60).toString().padLeft(2, '0')}:${duration.inSeconds.remainder(60).toString().padLeft(2, '0')}"
+      : "${duration.inHours.toString().padLeft(2, '0')}:${duration.inMinutes.remainder(60).toString().padLeft(2, '0')}:${duration.inSeconds.remainder(60).toString().padLeft(2, '0')}";
 }
