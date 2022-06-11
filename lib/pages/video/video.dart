@@ -9,7 +9,10 @@ import 'package:webpctv/widget/state.dart';
 import 'package:path/path.dart' as path;
 
 enum Mode {
-  None,
+  none,
+  // list loop single
+  play,
+  caption,
 }
 
 class MyVideoPage extends StatefulWidget {
@@ -65,7 +68,7 @@ abstract class _State extends MyState<MyVideoPage> {
   String get access => widget.access;
   final cancelToken = CancelToken();
   late VideoPlayerController playerController;
-  Mode mode = Mode.None;
+  Mode mode = Mode.none;
   getURL(String name) {
     final baseUrl = client.dio.options.baseUrl;
     final query = Uri(queryParameters: <String, dynamic>{
@@ -112,6 +115,8 @@ abstract class _State extends MyState<MyVideoPage> {
   getPath(String name) {
     return fullpath.endsWith('/') ? '$fullpath$name' : '$fullpath/$name';
   }
+
+  seekPlay(bool right) {}
 }
 
 class _MyVideoPageState extends _State with _KeyboardComponent {
@@ -176,10 +181,15 @@ class _MyVideoPageState extends _State with _KeyboardComponent {
             showController
                 ? VideoProgressIndicator(playerController, allowScrubbing: true)
                 : Container(),
+            showController ? _buildController(context) : Container(),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildController(BuildContext context) {
+    return Container();
   }
 }
 
@@ -192,15 +202,38 @@ mixin _KeyboardComponent on _State {
       }
     } else if (evt.logicalKey == LogicalKeyboardKey.arrowDown ||
         evt.logicalKey == LogicalKeyboardKey.arrowUp) {
-      if (playerController.value.isInitialized) {
+      if (value.isInitialized) {
         if (showController) {
+          _changeMode();
         } else {
           setState(() {
             showController = true;
           });
         }
       }
+    } else if (evt.logicalKey == LogicalKeyboardKey.arrowLeft ||
+        evt.logicalKey == LogicalKeyboardKey.arrowRight) {
+      if (value.isInitialized) {
+        if (showController) {
+          _changeValue(evt.logicalKey == LogicalKeyboardKey.arrowRight);
+        } else {
+          seekPlay(evt.logicalKey == LogicalKeyboardKey.arrowRight);
+        }
+      }
     }
+  }
+
+  _changeMode() {
+    setState(() {
+      const values = Mode.values;
+      for (var i = 0; i < values.length - 1; i++) {
+        if (mode == values[i]) {
+          mode = values[i + 1];
+          return;
+        }
+      }
+      mode = values[0];
+    });
   }
 
   _selected(VideoPlayerValue value) {
@@ -213,13 +246,19 @@ mixin _KeyboardComponent on _State {
       return;
     }
     switch (mode) {
-      case Mode.None:
+      case Mode.none:
         if (value.isPlaying) {
           playerController.pause();
         } else {
           playerController.play();
         }
         break;
+      case Mode.play:
+        break;
+      case Mode.caption:
+        break;
     }
   }
+
+  _changeValue(bool right) {}
 }
