@@ -2,6 +2,7 @@ import 'package:bot_toast/bot_toast.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:webpctv/db/db.dart';
 import 'package:webpctv/db/settings.dart';
 import 'package:webpctv/pages/error.dart';
 import 'package:webpctv/pages/video/values.dart';
@@ -36,6 +37,7 @@ abstract class _State extends MyState<MyListPage> {
   final cancelToken = CancelToken();
   final keys = <String, Source>{};
   final source = <Source>[];
+  bool hasVideo = false;
   final videos = <Source>[];
   @override
   void dispose() {
@@ -60,6 +62,44 @@ abstract class _State extends MyState<MyListPage> {
     );
   }
 
+  Future<void> _openSource(Source source) async {
+    final settings = MySettings.instance;
+    var i = await settings.getMode();
+    var mode = Mode.none;
+    if (i < Mode.values.length) {
+      mode = Mode.values[i];
+    }
+    checkAlive();
+    final caption = await settings.getCaption();
+    checkAlive();
+    i = await settings.getPlayMode();
+    var playMode = PlayMode.list;
+    if (i < PlayMode.values.length) {
+      playMode = PlayMode.values[i];
+    }
+    checkAlive();
+
+    final access =
+        await client.downloadAccess(device, cancelToken: cancelToken);
+    checkAlive();
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => MyVideoPage(
+          client: client,
+          device: device,
+          root: root,
+          path: fullpath,
+          source: source,
+          videos: videos,
+          access: access,
+          mode: mode,
+          caption: caption,
+          playMode: playMode,
+        ),
+      ),
+    );
+  }
+
   _openVide(String name) async {
     Source? source;
     for (var item in videos) {
@@ -75,48 +115,53 @@ abstract class _State extends MyState<MyListPage> {
       disabled = true;
     });
     try {
-      final settings = MySettings.instance;
-      var i = await settings.getMode();
-      var mode = Mode.none;
-      if (i < Mode.values.length) {
-        mode = Mode.values[i];
-      }
-      checkAlive();
-      final caption = await settings.getCaption();
-      checkAlive();
-      i = await settings.getPlayMode();
-      var playMode = PlayMode.list;
-      if (i < PlayMode.values.length) {
-        playMode = PlayMode.values[i];
-      }
-      checkAlive();
-
-      final access =
-          await client.downloadAccess(device, cancelToken: cancelToken);
+      await _openSource(source);
       aliveSetState(() {
-        debugPrint('access $access');
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => MyVideoPage(
-              client: client,
-              device: device,
-              root: root,
-              path: fullpath,
-              source: source!,
-              videos: videos,
-              access: access,
-              mode: mode,
-              caption: caption,
-              playMode: playMode,
-            ),
-          ),
-        );
         disabled = false;
       });
     } catch (e) {
-      if (isNotClosed) {
+      aliveSetState(() {
+        disabled = false;
         BotToast.showText(text: '$e');
+      });
+    }
+  }
+
+  _playHistory() async {
+    if (disabled) {
+      return;
+    }
+    setState(() {
+      disabled = true;
+    });
+    try {
+      final helpers = await DB.helpers;
+      checkAlive();
+      final history = await helpers.history.get(device, root, fullpath);
+      checkAlive();
+      Source? source;
+      for (var item in videos) {
+        if (item.isDir) {
+          continue;
+        }
+        source ??= item;
+        if (history == null) {
+          break;
+        }
+        if (history.name == item.name) {
+          source = item;
+          break;
+        }
       }
+      await _openSource(source!);
+      aliveSetState(() {
+        disabled = false;
+      });
+    } catch (e) {
+      aliveSetState(() {
+        disabled = false;
+        BotToast.showText(text: '$e');
+      });
     }
   }
 }
@@ -141,12 +186,14 @@ class _MyListPageState extends _State with _KeyboardComponent {
       final resp =
           await client.list(device, root, fullpath, cancelToken: cancelToken);
       checkAlive();
+
       setState(() {
         for (var item in resp.items) {
           if (item.isDir) {
             source.add(Source(fileInfo: item, captions: const <FileInfo>[]));
             continue;
           } else if (item.isVideo) {
+            hasVideo = true;
             final node = Source(fileInfo: item, captions: <FileInfo>[]);
             keys[item.name] = node;
             source.add(node);
@@ -176,6 +223,19 @@ class _MyListPageState extends _State with _KeyboardComponent {
         leading: Container(),
         leadingWidth: 0,
         title: Text('$device $root $fullpath'),
+        actions: hasVideo
+            ? [
+                FocusScope(
+                  node: focusScopeNode,
+                  child: IconButton(
+                    focusNode: createFocusNode('play_history'),
+                    icon: const Icon(Icons.play_circle),
+                    tooltip: 'play history',
+                    onPressed: disabled ? null : _playHistory,
+                  ),
+                ),
+              ]
+            : null,
       ),
       body: ListView(
         children: source
@@ -215,6 +275,11 @@ mixin _KeyboardComponent on _State {
       if (focused != null) {
         _selectFocused(focused);
       }
+    } else if (evt.logicalKey == LogicalKeyboardKey.arrowLeft ||
+        evt.logicalKey == LogicalKeyboardKey.arrowRight) {
+      if (hasVideo) {
+        setFocus('play_history');
+      }
     }
   }
 
@@ -222,6 +287,9 @@ mixin _KeyboardComponent on _State {
     final id = focused.id;
     if (id == MyFocusNode.arrowBack) {
       Navigator.of(context).pop();
+      return;
+    } else if (id == 'play_history') {
+      _playHistory();
       return;
     }
     if (enabled) {

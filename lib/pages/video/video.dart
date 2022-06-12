@@ -8,6 +8,7 @@ import 'package:webpctv/rpc/webapi/client.dart';
 import 'package:webpctv/widget/state.dart';
 import './controller.dart';
 import './values.dart';
+import './record.dart';
 
 class MyVideoPage extends StatefulWidget {
   const MyVideoPage({
@@ -51,6 +52,15 @@ abstract class _State extends MyState<MyVideoPage> {
   String get access => widget.access;
   final cancelToken = CancelToken();
   late VideoPlayerController playerController;
+  Record? _record;
+  Record get record =>
+      _record ??
+      Record(
+        device: device,
+        root: root,
+        path: fullpath,
+        name: source.fileInfo.name,
+      );
   getURL(String name) {
     final baseUrl = client.dio.options.baseUrl;
     final query = Uri(queryParameters: <String, dynamic>{
@@ -80,6 +90,7 @@ abstract class _State extends MyState<MyVideoPage> {
     return m;
   }
 
+  bool putseek = false;
   @override
   void initState() {
     super.initState();
@@ -90,9 +101,25 @@ abstract class _State extends MyState<MyVideoPage> {
         mixWithOthers: true,
       ),
     )
-      ..initialize().then((_) {
-        playerController.play();
-        setCaption();
+      ..initialize().then((_) async {
+        final duration = await record.getSeek();
+        try {
+          putseek = true;
+          final value = playerController.value;
+          if (duration != null && duration < value.duration) {
+            await playerController.seekTo(duration);
+          }
+        } finally {
+          if (isNotClosed) {
+            playerController.play();
+            setCaption();
+            Future.delayed(const Duration(seconds: 2)).then((value) {
+              if (isNotClosed) {
+                record.setHistory();
+              }
+            });
+          }
+        }
       })
       ..addListener(() {
         if (isNotClosed) {
@@ -126,6 +153,13 @@ abstract class _State extends MyState<MyVideoPage> {
   bool _replay = false;
   _listener() {
     var value = playerController.value;
+    if (putseek && value.isInitialized && value.isPlaying) {
+      final position = value.position;
+      if (position + const Duration(seconds: 10) < value.duration) {
+        record.setSeek(position);
+      }
+    }
+
     if (!value.isInitialized || value.isPlaying) {
       setState(() {});
       return;
@@ -232,6 +266,7 @@ abstract class _State extends MyState<MyVideoPage> {
   @override
   void dispose() {
     cancelToken.cancel();
+    record.close();
     playerController.dispose();
     super.dispose();
   }
@@ -339,13 +374,21 @@ class _MyVideoPageState extends _State with _KeyboardComponent {
   }
 
   Widget _buildLoading(BuildContext context) {
-    return const Center(
-      child: SizedBox(
-        height: 60,
-        child: FittedBox(
-          child: CupertinoActivityIndicator(),
+    return Stack(
+      alignment: Alignment.bottomCenter,
+      children: <Widget>[
+        MyControllerWidget(playerController: playerController, ui: ui),
+        const Center(
+          child: SizedBox(
+            height: 120,
+            child: FittedBox(
+              child: CupertinoActivityIndicator(
+                color: Colors.white,
+              ),
+            ),
+          ),
         ),
-      ),
+      ],
     );
   }
 

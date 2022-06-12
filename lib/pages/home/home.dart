@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:webpctv/pages/home/history.dart';
 import 'package:webpctv/pages/home/mount.dart';
 import 'package:webpctv/rpc/webapi/client.dart';
 import 'package:webpctv/widget/drawer.dart';
@@ -18,6 +19,16 @@ class MyHomePage extends StatefulWidget {
 
 abstract class _State extends MyState<MyHomePage> {
   Client get client => widget.client;
+  _openHistory() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => MyHistoryPage(
+          client: client,
+        ),
+      ),
+    );
+  }
+
   _openDevice(int id) {
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -50,23 +61,35 @@ class _MyHomePageState extends _State with _KeyboardComponent {
       drawer: MyDrawerView(
         client: client,
       ),
-      body: ListView(
-        children: client.devices
-            .map(
-              (e) => FocusScope(
+      body: ListView.builder(
+          itemCount: client.devices.length + 1,
+          itemBuilder: (context, i) {
+            if (i == 0) {
+              return FocusScope(
                 node: focusScopeNode,
                 child: ListTile(
-                  focusNode: createFocusNode('device_$e'),
-                  leading: const Icon(Icons.star),
-                  title: Text('$e'),
+                  focusNode: createFocusNode('history'),
+                  leading: const Icon(Icons.play_circle),
+                  title: const Text('play history'),
                   onTap: () {
-                    _openDevice(e);
+                    _openHistory();
                   },
                 ),
+              );
+            }
+            final device = client.devices[i - 1];
+            return FocusScope(
+              node: focusScopeNode,
+              child: ListTile(
+                focusNode: createFocusNode('device_$device'),
+                leading: const Icon(Icons.star),
+                title: Text('$device'),
+                onTap: () {
+                  _openDevice(device);
+                },
               ),
-            )
-            .toList(),
-      ),
+            );
+          }),
     );
   }
 }
@@ -85,6 +108,9 @@ mixin _KeyboardComponent on _State {
     final id = focused.id;
     if (id == MyFocusNode.openDrawer) {
       openDrawer();
+      return;
+    } else if (id == 'history') {
+      _openHistory();
       return;
     }
     if (id.startsWith('device_')) {

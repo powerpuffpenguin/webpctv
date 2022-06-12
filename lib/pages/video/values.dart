@@ -38,7 +38,6 @@ class UI {
   int caption = 0;
   final Source source;
   int selected = 0;
-
   UI({
     required bool show,
     required this.source,

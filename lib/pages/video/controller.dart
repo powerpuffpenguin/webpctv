@@ -68,7 +68,7 @@ class _MyControllerWidgetState extends State<MyControllerWidget> {
     }
 
     if (value.isInitialized) {
-      children.addAll(<Widget>[
+      children.add(
         Container(
           padding: const EdgeInsets.only(bottom: 10, right: 10),
           alignment: Alignment.bottomRight,
@@ -78,7 +78,7 @@ class _MyControllerWidgetState extends State<MyControllerWidget> {
             fontSize: 18,
           ),
         ),
-      ]);
+      );
     }
     return Stack(
       children: children,
