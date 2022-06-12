@@ -102,7 +102,13 @@ abstract class _State extends MyState<MyVideoPage> {
       ),
     )
       ..initialize().then((_) async {
+        if (isClosed) {
+          return;
+        }
         final duration = await record.getSeek();
+        if (isClosed) {
+          return;
+        }
         try {
           putseek = true;
           final value = playerController.value;
@@ -449,6 +455,7 @@ mixin _KeyboardComponent on _State {
       togglePlay();
       return;
     }
+
     // controller
     switch (ui.mode) {
       case Mode.none:

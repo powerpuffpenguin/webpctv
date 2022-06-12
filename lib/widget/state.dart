@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ppg_ui/state/state.dart';
+import 'package:rxdart/subjects.dart';
 import 'package:webpctv/service/key_event_service.dart';
 
 class MyFocusNode {
@@ -22,8 +23,17 @@ abstract class MyState<T extends StatefulWidget> extends UIState<T> {
   final _focusNodeKeys = <FocusNode, MyFocusNode>{};
 
   final FocusScopeNode focusScopeNode = FocusScopeNode();
-  void listenKeyUp(void Function(KeyEvent)? onKeyUp) =>
-      addSubscription(KeyEventService.instance.keyUp.listen(onKeyUp));
+  KeyUpListener? _onKeyUp;
+  void listenKeyUp(KeyUpListener onKeyUp) {
+    if (isClosed) {
+      return;
+    }
+    if (_onKeyUp != null) {
+      KeyEventService.instance.removeKeyUpListener(_onKeyUp!);
+    }
+    _onKeyUp = onKeyUp;
+    KeyEventService.instance.addKeyUpListener(onKeyUp);
+  }
 
   @protected
   MyFocusNode? getFocusNode(String id) => _keysFocusNode[id];
@@ -72,6 +82,10 @@ abstract class MyState<T extends StatefulWidget> extends UIState<T> {
   @mustCallSuper
   @override
   void dispose() {
+    if (_onKeyUp != null) {
+      KeyEventService.instance.removeKeyUpListener(_onKeyUp!);
+      _onKeyUp = null;
+    }
     _keysFocusNode.forEach((key, value) {
       value.dispose();
     });
