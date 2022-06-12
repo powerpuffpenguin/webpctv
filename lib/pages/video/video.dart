@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -22,6 +20,9 @@ class MyVideoPage extends StatefulWidget {
     required this.videos,
     required this.access,
     this.showController = false,
+    required this.mode,
+    required this.caption,
+    required this.playMode,
   }) : super(key: key);
   final Client client;
   final int device;
@@ -31,6 +32,10 @@ class MyVideoPage extends StatefulWidget {
   final List<Source> videos;
   final String access;
   final bool showController;
+
+  final Mode mode;
+  final int caption;
+  final PlayMode playMode;
 
   @override
   _MyVideoPageState createState() => _MyVideoPageState();
@@ -58,35 +63,26 @@ abstract class _State extends MyState<MyVideoPage> {
   }
 
   UI? _ui;
-  UI get ui => _ui ??= UI(
+  UI get ui {
+    var m = _ui;
+    if (m == null) {
+      m = UI(
         show: widget.showController,
         source: source,
         videos: videos,
       );
+      m.mode = widget.mode;
+      m.caption = widget.caption;
+      m.play = widget.playMode;
+
+      _ui = m;
+    }
+    return m;
+  }
+
   @override
   void initState() {
     super.initState();
-    Future.value().then((value) {
-      if (isNotClosed) {
-        _init();
-      }
-    });
-  }
-
-  _init() async {
-    final settings = MySettings.instance;
-    final mode = await settings.getMode();
-    final caption = await settings.getCaption();
-    final playMode = await settings.getPlayMode();
-    setState(() {
-      if (mode < Mode.values.length) {
-        ui.mode = Mode.values[mode];
-      }
-      ui.caption = caption;
-      if (playMode < PlayMode.values.length) {
-        ui.play = PlayMode.values[playMode];
-      }
-    });
 
     playerController = VideoPlayerController.network(
       getURL(source.name),
@@ -183,6 +179,9 @@ abstract class _State extends MyState<MyVideoPage> {
                 videos: videos,
                 access: access,
                 showController: ui.show,
+                mode: ui.mode,
+                caption: ui.caption,
+                playMode: ui.play,
               ),
             ),
           );
@@ -214,6 +213,9 @@ abstract class _State extends MyState<MyVideoPage> {
                 videos: videos,
                 access: access,
                 showController: ui.show,
+                mode: ui.mode,
+                caption: ui.caption,
+                playMode: ui.play,
               ),
             ),
           );

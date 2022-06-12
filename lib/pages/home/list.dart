@@ -2,6 +2,7 @@ import 'package:bot_toast/bot_toast.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:webpctv/db/settings.dart';
 import 'package:webpctv/pages/error.dart';
 import 'package:webpctv/pages/video/values.dart';
 import 'package:webpctv/pages/video/video.dart';
@@ -74,6 +75,22 @@ abstract class _State extends MyState<MyListPage> {
       disabled = true;
     });
     try {
+      final settings = MySettings.instance;
+      var i = await settings.getMode();
+      var mode = Mode.none;
+      if (i < Mode.values.length) {
+        mode = Mode.values[i];
+      }
+      checkAlive();
+      final caption = await settings.getCaption();
+      checkAlive();
+      i = await settings.getPlayMode();
+      var playMode = PlayMode.list;
+      if (i < PlayMode.values.length) {
+        playMode = PlayMode.values[i];
+      }
+      checkAlive();
+
       final access =
           await client.downloadAccess(device, cancelToken: cancelToken);
       aliveSetState(() {
@@ -88,6 +105,9 @@ abstract class _State extends MyState<MyListPage> {
               source: source!,
               videos: videos,
               access: access,
+              mode: mode,
+              caption: caption,
+              playMode: playMode,
             ),
           ),
         );
