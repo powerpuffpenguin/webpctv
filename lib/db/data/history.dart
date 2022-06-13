@@ -127,4 +127,8 @@ ON $table ($columnAt);
         await db.query(table, columns: columns, orderBy: "$columnAt DESC");
     return list.isEmpty ? null : list.map((e) => History.fromMap(e));
   }
+
+  Future<int> clear() {
+    return db.delete(table);
+  }
 }

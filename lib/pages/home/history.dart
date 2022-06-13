@@ -10,7 +10,14 @@ import 'package:webpctv/pages/video/values.dart';
 import 'package:webpctv/pages/video/video.dart';
 import 'package:webpctv/rpc/webapi/client.dart';
 import 'package:webpctv/rpc/webapi/fs.dart';
+import 'package:webpctv/widget/confirmation_dialog.dart';
 import 'package:webpctv/widget/state.dart';
+
+class _FocuesID {
+  _FocuesID._();
+  static const clearHistory = 'clear_history';
+  static const clearProgress = 'clear_progress';
+}
 
 class MyHistoryPage extends StatefulWidget {
   const MyHistoryPage({
@@ -126,6 +133,67 @@ abstract class _State extends MyState<MyHistoryPage> {
       ),
     );
   }
+
+  _clearHistory() async {
+    setState(() {
+      disabled = true;
+    });
+    try {
+      final ok = await showConfirmationDialog(
+        context,
+        const Text('clear history'),
+        const Text('Are you sure you want to clear history?'),
+      );
+      checkAlive();
+      if (!ok) {
+        return;
+      }
+      final helpers = await DB.helpers;
+      checkAlive();
+      await helpers.history.clear();
+      aliveSetState(() {
+        BotToast.showText(text: 'clear history success');
+        source.clear();
+      });
+    } catch (e) {
+      if (isNotClosed) {
+        BotToast.showText(text: '$e');
+      }
+    } finally {
+      aliveSetState(() {
+        disabled = false;
+      });
+    }
+  }
+
+  _clearProgress() async {
+    setState(() {
+      disabled = true;
+    });
+    try {
+      final ok = await showConfirmationDialog(
+        context,
+        const Text('clear play progress'),
+        const Text('Are you sure you want to clear play progress?'),
+      );
+      checkAlive();
+      if (!ok) {
+        return;
+      }
+      final helpers = await DB.helpers;
+      checkAlive();
+      await helpers.seek.clear();
+      BotToast.showText(text: 'clear play progress success');
+    } catch (e) {
+      if (isNotClosed) {
+        BotToast.showText(text: '$e');
+      }
+    } finally {
+      aliveSetState(() {
+        disabled = false;
+      });
+    }
+  }
 }
 
 class _MyHistoryPageState extends _State with _KeyboardComponent {
@@ -166,6 +234,26 @@ class _MyHistoryPageState extends _State with _KeyboardComponent {
         leading: Container(),
         leadingWidth: 0,
         title: const Text('Play History'),
+        actions: [
+          FocusScope(
+            node: focusScopeNode,
+            child: IconButton(
+              focusNode: createFocusNode(_FocuesID.clearHistory),
+              icon: const Icon(Icons.delete_forever),
+              tooltip: 'clear history',
+              onPressed: disabled ? null : _clearHistory,
+            ),
+          ),
+          FocusScope(
+            node: focusScopeNode,
+            child: IconButton(
+              focusNode: createFocusNode(_FocuesID.clearProgress),
+              icon: const Icon(Icons.auto_delete_outlined),
+              tooltip: 'clear progress',
+              onPressed: disabled ? null : _clearProgress,
+            ),
+          ),
+        ],
       ),
       body: ListView.builder(
           itemCount: source.length,
@@ -199,13 +287,24 @@ mixin _KeyboardComponent on _State {
       if (focused != null) {
         _selectFocused(focused);
       }
+    } else if (evt.logicalKey == LogicalKeyboardKey.arrowLeft ||
+        evt.logicalKey == LogicalKeyboardKey.arrowRight) {
+      final focused = focusedNode();
+      final id = focused?.id ?? '';
+      if (id.startsWith('index_')) {
+        setFocus(_FocuesID.clearProgress);
+      }
     }
   }
 
   _selectFocused(MyFocusNode focused) {
     final id = focused.id;
     if (enabled) {
-      if (id.startsWith('index_') && focused.data is History) {
+      if (id == _FocuesID.clearHistory) {
+        _clearHistory();
+      } else if (id == _FocuesID.clearProgress) {
+        _clearProgress();
+      } else if (id.startsWith('index_') && focused.data is History) {
         _openHistory(focused.data);
       }
     }
