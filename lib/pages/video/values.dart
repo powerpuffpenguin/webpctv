@@ -93,7 +93,7 @@ class UI {
   bool changeSelected(bool right) {
     if (right) {
       final max = videos.length - 1;
-      if (selected <= max) {
+      if (selected < max) {
         selected++;
       }
       return true;
