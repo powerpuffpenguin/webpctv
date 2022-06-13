@@ -345,6 +345,24 @@ abstract class _State extends MyState<MyVideoPage> {
       }
     }
   }
+
+  void _seekProgress(Progress progress) {
+    if (_seeking) {
+      return;
+    }
+    final value = playerController.value;
+    if (!value.isInitialized) {
+      return;
+    }
+    const values = Progress.values;
+    for (var i = 1; i < values.length; i++) {
+      if (progress == values[i]) {
+        _seekToDuration(value.duration * i ~/ 10);
+        return;
+      }
+    }
+    _seekToDuration(Duration.zero);
+  }
 }
 
 class _MyVideoPageState extends _State with _KeyboardComponent {
@@ -468,6 +486,9 @@ mixin _KeyboardComponent on _State {
         break;
       case Mode.caption:
         break;
+      case Mode.progress:
+        _seekProgress(ui.progress);
+        break;
     }
   }
 
@@ -489,6 +510,11 @@ mixin _KeyboardComponent on _State {
         break;
       case Mode.caption:
         _changeCaption(right);
+        break;
+      case Mode.progress:
+        setState(() {
+          ui.changeProgress(right);
+        });
         break;
     }
   }

@@ -65,6 +65,9 @@ class _MyControllerWidgetState extends State<MyControllerWidget> {
           ),
         );
         break;
+      case Mode.progress:
+        children.add(_buildProgress(context));
+        break;
     }
 
     if (value.isInitialized) {
@@ -164,6 +167,29 @@ class _MyControllerWidgetState extends State<MyControllerWidget> {
           clipBehavior: Clip.hardEdge,
           children: children,
         ),
+      ),
+    );
+  }
+
+  Widget _buildProgress(BuildContext context) {
+    final value = controller.value;
+    if (!value.isInitialized) {
+      return Container();
+    }
+    var text = durationToString(Duration.zero);
+    const values = Progress.values;
+    for (var i = 1; i < values.length; i++) {
+      if (ui.progress == values[i]) {
+        text = '$i/10 ${durationToString(value.duration * i ~/ 10)}';
+        break;
+      }
+    }
+    return Container(
+      padding: const EdgeInsets.only(top: 60, left: 40),
+      alignment: Alignment.topLeft,
+      child: MyLabelWidget(
+        label: text,
+        fontSize: 24,
       ),
     );
   }

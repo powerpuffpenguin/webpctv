@@ -12,11 +12,24 @@ enum Mode {
   caption,
   // list loop single
   play,
+  progress,
 }
 enum PlayMode {
   list,
   loop,
   single,
+}
+enum Progress {
+  v0,
+  v10,
+  v20,
+  v30,
+  v40,
+  v50,
+  v60,
+  v70,
+  v80,
+  v90,
 }
 
 class UI {
@@ -29,11 +42,13 @@ class UI {
     _show = v;
     if (v) {
       resetSelected();
+      progress = Progress.v0;
     }
   }
 
   Mode mode = Mode.none;
   PlayMode play = PlayMode.list;
+  Progress progress = Progress.v0;
   final List<Source> videos;
   int caption = 0;
   final Source source;
@@ -50,6 +65,28 @@ class UI {
       if (videos[i] == source) {
         selected = i;
       }
+    }
+  }
+
+  void changeProgress(bool right) {
+    const values = Progress.values;
+    final last = values.length - 1;
+    if (right) {
+      for (var i = 0; i < last; i++) {
+        if (progress == values[i]) {
+          progress = values[i + 1];
+          return;
+        }
+      }
+      progress = values[0];
+    } else {
+      for (var i = last; i > 0; i--) {
+        if (progress == values[i]) {
+          progress = values[i - 1];
+          return;
+        }
+      }
+      progress = values[last];
     }
   }
 
