@@ -95,6 +95,7 @@ abstract class _State extends MyState<MyListPage> {
           mode: mode,
           caption: caption,
           playMode: playMode,
+          locked: false,
         ),
       ),
     );

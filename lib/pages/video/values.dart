@@ -35,7 +35,12 @@ enum Progress {
 class UI {
   bool _show;
   bool get show => _show;
+  bool phone = false;
+  bool locked = false;
   set show(bool v) {
+    if (!v) {
+      phone = false;
+    }
     if (v == _show) {
       return;
     }
@@ -46,7 +51,18 @@ class UI {
     }
   }
 
-  Mode mode = Mode.none;
+  Mode _mode = Mode.none;
+  set mode(Mode mode) => _mode = mode;
+  Mode get mode {
+    final m = _mode;
+    if (phone) {
+      if (m == Mode.none || m == Mode.progress) {
+        return Mode.playlist;
+      }
+    }
+    return m;
+  }
+
   PlayMode play = PlayMode.list;
   Progress progress = Progress.v0;
   final List<Source> videos;
@@ -106,18 +122,19 @@ class UI {
 
   int changeMode(bool down) {
     const values = Mode.values;
-    final last = values.length - 1;
+    final last = phone ? values.length - 2 : values.length - 1;
+    final min = phone ? 1 : 0;
     if (down) {
-      for (var i = 0; i < last; i++) {
+      for (var i = min; i < last; i++) {
         if (mode == values[i]) {
           mode = values[i + 1];
           return i + 1;
         }
       }
-      mode = values[0];
-      return 0;
+      mode = values[min];
+      return min;
     } else {
-      for (var i = last; i > 0; i--) {
+      for (var i = last; i > min; i--) {
         if (mode == values[i]) {
           mode = values[i - 1];
           return i - 1;
@@ -152,7 +169,7 @@ class UI {
     }
   }
 
-  int changeCaption(bool right) {
+  int changeCaption(bool right, {bool loop = false}) {
     if (source.captions.isEmpty) {
       return caption;
     }
@@ -162,6 +179,7 @@ class UI {
       } else {
         final val = caption + 1;
         if (val >= source.captions.length) {
+          caption = -1;
           return caption;
         }
         caption = val;
@@ -245,4 +263,14 @@ class CaptionLoader {
     }
     return completer.future;
   }
+}
+
+String durationToString(Duration duration) {
+  final hours = duration.inDays * 24 + duration.inHours;
+  final ms =
+      '${duration.inMinutes.remainder(60).toString().padLeft(2, '0')}:${duration.inSeconds.remainder(60).toString().padLeft(2, '0')}';
+  if (hours > 0) {
+    return '$hours:$ms';
+  }
+  return ms;
 }

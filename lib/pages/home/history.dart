@@ -129,6 +129,7 @@ abstract class _State extends MyState<MyHistoryPage> {
           mode: mode,
           caption: caption,
           playMode: playMode,
+          locked: false,
         ),
       ),
     );

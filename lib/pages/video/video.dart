@@ -24,6 +24,7 @@ class MyVideoPage extends StatefulWidget {
     required this.mode,
     required this.caption,
     required this.playMode,
+    required this.locked,
   }) : super(key: key);
   final Client client;
   final int device;
@@ -37,6 +38,7 @@ class MyVideoPage extends StatefulWidget {
   final Mode mode;
   final int caption;
   final PlayMode playMode;
+  final bool locked;
 
   @override
   _MyVideoPageState createState() => _MyVideoPageState();
@@ -222,6 +224,7 @@ abstract class _State extends MyState<MyVideoPage> {
                 mode: ui.mode,
                 caption: ui.caption,
                 playMode: ui.play,
+                locked: ui.locked,
               ),
             ),
           );
@@ -256,6 +259,7 @@ abstract class _State extends MyState<MyVideoPage> {
                 mode: ui.mode,
                 caption: ui.caption,
                 playMode: ui.play,
+                locked: ui.locked,
               ),
             ),
           );
@@ -401,7 +405,7 @@ class _MyVideoPageState extends _State with _KeyboardComponent {
     return Stack(
       alignment: Alignment.bottomCenter,
       children: <Widget>[
-        MyControllerWidget(playerController: playerController, ui: ui),
+        _buildController(context),
         const Center(
           child: SizedBox(
             height: 120,
@@ -416,24 +420,69 @@ class _MyVideoPageState extends _State with _KeyboardComponent {
     );
   }
 
+  Widget _buildController(BuildContext context) {
+    return MyControllerWidget(
+      playerController: playerController,
+      ui: ui,
+      onChangedPlayMode: disabled
+          ? null
+          : () {
+              setState(() {
+                final val = ui.changePlayMode(true);
+                MySettings.instance.setPlayMode(val);
+              });
+            },
+      onChangedPlayList: disabled ? null : (i) => _playIndex(i),
+      onChangedLocked: disabled
+          ? null
+          : () => setState(() {
+                ui.locked = !ui.locked;
+              }),
+      onChangedCaption:
+          disabled ? null : () => _changeCaption(true, loop: true),
+    );
+  }
+
   Widget _buildVideo(BuildContext context) {
     return Container(
       alignment: Alignment.center,
       color: Colors.black,
       child: AspectRatio(
         aspectRatio: playerController.value.aspectRatio,
-        child: Stack(
-          alignment: Alignment.bottomCenter,
-          children: <Widget>[
-            VideoPlayer(playerController),
-            MyControllerWidget(playerController: playerController, ui: ui),
-            ClosedCaption(
-              text: playerController.value.caption.text,
-            ),
-            ui.show
-                ? VideoProgressIndicator(playerController, allowScrubbing: true)
-                : Container(),
-          ],
+        child: GestureDetector(
+          onTap: disabled
+              ? null
+              : () => setState(() {
+                    ui.show = !ui.show;
+                    if (ui.show) {
+                      ui.phone = true;
+                    }
+                  }),
+          onHorizontalDragUpdate: disabled || ui.locked
+              ? null
+              : (details) {
+                  if (details.delta.dx > 4) {
+                    seekPlay(true);
+                  } else if (details.delta.dx < -4) {
+                    seekPlay(false);
+                  }
+                },
+          child: Stack(
+            alignment: Alignment.bottomCenter,
+            children: <Widget>[
+              VideoPlayer(playerController),
+              _buildController(context),
+              ClosedCaption(
+                text: playerController.value.caption.text,
+              ),
+              ui.show
+                  ? VideoProgressIndicator(
+                      playerController,
+                      allowScrubbing: !ui.locked,
+                    )
+                  : Container(),
+            ],
+          ),
         ),
       ),
     );
@@ -442,6 +491,9 @@ class _MyVideoPageState extends _State with _KeyboardComponent {
 
 mixin _KeyboardComponent on _State {
   void onKeyUp(KeyEvent evt) {
+    if (ui.locked) {
+      return;
+    }
     final value = playerController.value;
     if (evt.logicalKey == LogicalKeyboardKey.select) {
       _selected(value);
@@ -519,9 +571,9 @@ mixin _KeyboardComponent on _State {
     }
   }
 
-  _changeCaption(bool right) {
+  _changeCaption(bool right, {bool loop = false}) {
     final old = ui.caption;
-    final val = ui.changeCaption(right);
+    final val = ui.changeCaption(right, loop: loop);
     if (old != val) {
       setState(() {
         setCaption();

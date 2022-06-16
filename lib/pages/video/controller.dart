@@ -9,9 +9,17 @@ class MyControllerWidget extends StatefulWidget {
     Key? key,
     required this.playerController,
     required this.ui,
+    this.onChangedPlayMode,
+    this.onChangedPlayList,
+    this.onChangedLocked,
+    this.onChangedCaption,
   }) : super(key: key);
   final UI ui;
   final VideoPlayerController playerController;
+  final VoidCallback? onChangedPlayMode;
+  final ValueChanged<int>? onChangedPlayList;
+  final VoidCallback? onChangedLocked;
+  final VoidCallback? onChangedCaption;
   @override
   _MyControllerWidgetState createState() => _MyControllerWidgetState();
 }
@@ -19,6 +27,13 @@ class MyControllerWidget extends StatefulWidget {
 class _MyControllerWidgetState extends State<MyControllerWidget> {
   UI get ui => widget.ui;
   VideoPlayerController get controller => widget.playerController;
+  bool _closed = false;
+  @override
+  void dispose() {
+    _closed = true;
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!ui.show) {
@@ -28,13 +43,20 @@ class _MyControllerWidgetState extends State<MyControllerWidget> {
     final value = controller.value;
     children.addAll(
       <Widget>[
-        Container(
-          padding: const EdgeInsets.only(top: 10, left: 10),
-          alignment: Alignment.topLeft,
-          child: MyLabelWidget(
-            label: ui.mode.name,
-          ),
-        ),
+        ui.locked
+            ? Container()
+            : Container(
+                padding: const EdgeInsets.only(top: 10, left: 10),
+                alignment: Alignment.topLeft,
+                child: MyLabelWidget(
+                  label: ui.mode.name,
+                  onTab: () {
+                    setState(() {
+                      ui.changeMode(true);
+                    });
+                  },
+                ),
+              ),
         Container(
           padding: const EdgeInsets.only(top: 10, left: 10),
           alignment: Alignment.topRight,
@@ -43,31 +65,45 @@ class _MyControllerWidgetState extends State<MyControllerWidget> {
             fontSize: 24,
           ),
         ),
+        Container(
+          alignment: Alignment.centerRight,
+          padding: const EdgeInsets.only(right: 10),
+          child: MyIconWidget(
+            icon: ui.locked ? Icons.lock : Icons.lock_open_sharp,
+            fontSize: 32,
+            onTab: widget.onChangedLocked,
+          ),
+        ),
       ],
     );
-    switch (ui.mode) {
-      case Mode.none:
-        break;
-      case Mode.playlist:
-        children.add(_buildPlaylist(context));
-        break;
-      case Mode.caption:
-        if (ui.source.captions.isNotEmpty) {
-          children.add(_buildCaptions(context));
-        }
-        break;
-      case Mode.play:
-        children.add(
-          Container(
-            padding: const EdgeInsets.only(top: 60, left: 40),
-            alignment: Alignment.topLeft,
-            child: MyLabelWidget(label: ui.play.name),
-          ),
-        );
-        break;
-      case Mode.progress:
-        children.add(_buildProgress(context));
-        break;
+    if (!ui.locked) {
+      switch (ui.mode) {
+        case Mode.none:
+          break;
+        case Mode.playlist:
+          children.add(_buildPlaylist(context));
+          break;
+        case Mode.caption:
+          if (ui.source.captions.isNotEmpty) {
+            children.add(_buildCaptions(context));
+          }
+          break;
+        case Mode.play:
+          children.add(
+            Container(
+              padding: const EdgeInsets.only(top: 60, left: 40),
+              alignment: Alignment.topLeft,
+              child: MyLabelWidget(
+                label: ui.play.name,
+                onTab: widget.onChangedPlayMode,
+              ),
+            ),
+          );
+          break;
+        case Mode.progress:
+          children.add(_buildProgress(context));
+          break;
+      }
     }
 
     if (value.isInitialized) {
@@ -82,6 +118,31 @@ class _MyControllerWidgetState extends State<MyControllerWidget> {
           ),
         ),
       );
+      if (ui.phone && !ui.locked) {
+        children.add(
+          Center(
+            child: value.isPlaying
+                ? MyIconWidget(
+                    icon: Icons.pause,
+                    fontSize: 72,
+                    onTab: () => controller.pause().then((value) {
+                      if (!_closed) {
+                        setState(() {});
+                      }
+                    }),
+                  )
+                : MyIconWidget(
+                    icon: Icons.play_arrow,
+                    fontSize: 72,
+                    onTab: () => controller.play().then((value) {
+                      if (!_closed) {
+                        setState(() {});
+                      }
+                    }),
+                  ),
+          ),
+        );
+      }
     }
     return Stack(
       children: children,
@@ -95,9 +156,10 @@ class _MyControllerWidgetState extends State<MyControllerWidget> {
       return Container(
         padding: padding,
         alignment: Alignment.topLeft,
-        child: const MyLabelWidget(
+        child: MyLabelWidget(
           label: 'close',
           fontSize: fontSize,
+          onTab: widget.onChangedCaption,
         ),
       );
     }
@@ -125,6 +187,7 @@ class _MyControllerWidgetState extends State<MyControllerWidget> {
       child: MyLabelWidget(
         label: name,
         fontSize: fontSize,
+        onTab: widget.onChangedCaption,
       ),
     );
   }
@@ -155,6 +218,17 @@ class _MyControllerWidgetState extends State<MyControllerWidget> {
         fontSize: 24,
         padding: const EdgeInsets.symmetric(horizontal: 8),
         color: i != ui.selected ? null : Theme.of(context).primaryColor,
+        onTab: () {
+          if (i != ui.selected) {
+            setState(() {
+              ui.selected = i;
+            });
+          } else {
+            if (widget.onChangedPlayList != null) {
+              widget.onChangedPlayList!(i);
+            }
+          }
+        },
       ));
     }
     return Container(
@@ -193,14 +267,4 @@ class _MyControllerWidgetState extends State<MyControllerWidget> {
       ),
     );
   }
-}
-
-String durationToString(Duration duration) {
-  final hours = duration.inDays * 24 + duration.inHours;
-  final ms =
-      '${duration.inMinutes.remainder(60).toString().padLeft(2, '0')}:${duration.inSeconds.remainder(60).toString().padLeft(2, '0')}';
-  if (hours > 0) {
-    return '$hours:$ms';
-  }
-  return ms;
 }
