@@ -169,7 +169,7 @@ class UI {
     }
   }
 
-  int changeCaption(bool right, {bool loop = false}) {
+  int changeCaption(bool right) {
     if (source.captions.isEmpty) {
       return caption;
     }

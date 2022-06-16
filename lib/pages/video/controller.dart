@@ -19,7 +19,7 @@ class MyControllerWidget extends StatefulWidget {
   final VoidCallback? onChangedPlayMode;
   final ValueChanged<int>? onChangedPlayList;
   final VoidCallback? onChangedLocked;
-  final VoidCallback? onChangedCaption;
+  final ValueChanged<int>? onChangedCaption;
   @override
   _MyControllerWidgetState createState() => _MyControllerWidgetState();
 }
@@ -149,24 +149,79 @@ class _MyControllerWidgetState extends State<MyControllerWidget> {
     );
   }
 
+  Widget _buildCaption(BuildContext context, int i, bool selected) {
+    final item = ui.source.captions[i];
+    var name = path.basenameWithoutExtension(item.name);
+    final prefix = path.basenameWithoutExtension(ui.source.name);
+    if (name.startsWith(prefix)) {
+      name = name.substring(prefix.length);
+      if (name.startsWith('.')) {
+        name = name.substring(1);
+      }
+      if (name == '') {
+        name = '$i';
+      }
+    } else {
+      name = '$i';
+    }
+
+    return MyLabelWidget(
+      label: name,
+      fontSize: 24,
+      color: selected ? Theme.of(context).primaryColor : null,
+      onTab: widget.onChangedCaption == null
+          ? null
+          : () => widget.onChangedCaption!(i),
+    );
+  }
+
   Widget _buildCaptions(BuildContext context) {
     const padding = EdgeInsets.only(top: 60, left: 40);
     const fontSize = 24.0;
-    if (ui.caption < 0) {
-      return Container(
-        padding: padding,
-        alignment: Alignment.topLeft,
-        child: MyLabelWidget(
-          label: 'close',
-          fontSize: fontSize,
-          onTab: widget.onChangedCaption,
-        ),
-      );
-    }
     var i = ui.caption;
     if (i > ui.source.captions.length) {
       i = ui.source.captions.length - 1;
     }
+    if (ui.phone) {
+      final children = <Widget>[];
+      children.add(
+        MyLabelWidget(
+          label: 'close',
+          fontSize: fontSize,
+          color: i < 0 ? Theme.of(context).primaryColor : null,
+          onTab: widget.onChangedCaption == null
+              ? null
+              : () {
+                  widget.onChangedCaption!(-1);
+                },
+        ),
+      );
+      for (var index = 0; index < ui.source.captions.length; index++) {
+        children.add(_buildCaption(context, index, i == index));
+      }
+      return Container(
+        padding: padding,
+        alignment: Alignment.topLeft,
+        child: SizedBox(
+          height: 34,
+          child: Wrap(
+            children: children,
+          ),
+        ),
+      );
+    }
+
+    if (ui.caption < 0) {
+      return Container(
+        padding: padding,
+        alignment: Alignment.topLeft,
+        child: const MyLabelWidget(
+          label: 'close',
+          fontSize: fontSize,
+        ),
+      );
+    }
+
     final item = ui.source.captions[i];
     var name = path.basenameWithoutExtension(item.name);
     final prefix = path.basenameWithoutExtension(ui.source.name);
@@ -187,7 +242,6 @@ class _MyControllerWidgetState extends State<MyControllerWidget> {
       child: MyLabelWidget(
         label: name,
         fontSize: fontSize,
-        onTab: widget.onChangedCaption,
       ),
     );
   }

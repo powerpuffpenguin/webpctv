@@ -298,7 +298,7 @@ abstract class _State extends MyState<MyVideoPage> {
 
   Duration _seekTo = Duration.zero;
   bool _seeking = false;
-  void seekPlay(bool right) {
+  void seekPlay(bool right, {Duration duration = const Duration(seconds: 10)}) {
     final value = playerController.value;
     if (!value.isInitialized) {
       return;
@@ -438,8 +438,17 @@ class _MyVideoPageState extends _State with _KeyboardComponent {
           : () => setState(() {
                 ui.locked = !ui.locked;
               }),
-      onChangedCaption:
-          disabled ? null : () => _changeCaption(true, loop: true),
+      onChangedCaption: disabled
+          ? null
+          : (i) {
+              if (ui.caption != i) {
+                setState(() {
+                  ui.caption = i;
+                  setCaption();
+                  MySettings.instance.setCaption(i);
+                });
+              }
+            },
     );
   }
 
@@ -461,10 +470,11 @@ class _MyVideoPageState extends _State with _KeyboardComponent {
           onHorizontalDragUpdate: disabled || ui.locked
               ? null
               : (details) {
-                  if (details.delta.dx > 4) {
-                    seekPlay(true);
-                  } else if (details.delta.dx < -4) {
-                    seekPlay(false);
+                  final v = details.delta.dx.toInt();
+                  if (v > 1) {
+                    seekPlay(true, duration: Duration(milliseconds: v * 100));
+                  } else if (details.delta.dx < -1) {
+                    seekPlay(false, duration: Duration(milliseconds: -v * 100));
                   }
                 },
           child: Stack(
@@ -571,9 +581,9 @@ mixin _KeyboardComponent on _State {
     }
   }
 
-  _changeCaption(bool right, {bool loop = false}) {
+  _changeCaption(bool right) {
     final old = ui.caption;
-    final val = ui.changeCaption(right, loop: loop);
+    final val = ui.changeCaption(right);
     if (old != val) {
       setState(() {
         setCaption();
