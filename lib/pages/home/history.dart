@@ -106,12 +106,14 @@ abstract class _State extends MyState<MyHistoryPage> {
     checkAlive();
     final caption = await settings.getCaption();
     checkAlive();
+    final fontSize = await settings.getFontSize();
+    checkAlive();
     i = await settings.getPlayMode();
+    checkAlive();
     var playMode = PlayMode.list;
     if (i < PlayMode.values.length) {
       playMode = PlayMode.values[i];
     }
-    checkAlive();
 
     final access = await widget.client
         .downloadAccess(history.device, cancelToken: cancelToken);
@@ -128,6 +130,7 @@ abstract class _State extends MyState<MyHistoryPage> {
           access: access,
           mode: mode,
           caption: caption,
+          fontSize: fontSize,
           playMode: playMode,
           locked: false,
         ),

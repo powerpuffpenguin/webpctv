@@ -13,6 +13,7 @@ class MyControllerWidget extends StatefulWidget {
     this.onChangedPlayList,
     this.onChangedLocked,
     this.onChangedCaption,
+    this.onChangedFontsize,
   }) : super(key: key);
   final UI ui;
   final VideoPlayerController playerController;
@@ -20,6 +21,7 @@ class MyControllerWidget extends StatefulWidget {
   final ValueChanged<int>? onChangedPlayList;
   final VoidCallback? onChangedLocked;
   final ValueChanged<int>? onChangedCaption;
+  final VoidCallback? onChangedFontsize;
   @override
   _MyControllerWidgetState createState() => _MyControllerWidgetState();
 }
@@ -88,6 +90,9 @@ class _MyControllerWidgetState extends State<MyControllerWidget> {
             children.add(_buildCaptions(context));
           }
           break;
+        case Mode.fontsize:
+          children.add(_buildFontsize(context));
+          break;
         case Mode.play:
           children.add(
             Container(
@@ -149,6 +154,47 @@ class _MyControllerWidgetState extends State<MyControllerWidget> {
     );
   }
 
+  Widget _buildFontsize(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.only(top: 60, left: 20, right: 20),
+      alignment: Alignment.topLeft,
+      child: SizedBox(
+        height: 34,
+        child: Wrap(
+          clipBehavior: Clip.hardEdge,
+          children: <Widget>[
+            MyIconWidget(
+              icon: Icons.keyboard_arrow_left_sharp,
+              padding: const EdgeInsets.symmetric(horizontal: 4.0),
+              onTab: () {
+                if (ui.fontSizeSelected > UI.minFontSize) {
+                  setState(() {
+                    ui.fontSizeSelected--;
+                  });
+                }
+              },
+            ),
+            MyLabelWidget(
+              label: '${ui.fontSizeSelected}',
+              onTab: widget.onChangedFontsize,
+            ),
+            MyIconWidget(
+              icon: Icons.keyboard_arrow_right_sharp,
+              padding: const EdgeInsets.symmetric(horizontal: 4.0),
+              onTab: () {
+                if (ui.fontSizeSelected < UI.maxFontSize) {
+                  setState(() {
+                    ui.fontSizeSelected++;
+                  });
+                }
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildCaption(BuildContext context, int i, bool selected) {
     final item = ui.source.captions[i];
     var name = path.basenameWithoutExtension(item.name);
@@ -205,6 +251,7 @@ class _MyControllerWidgetState extends State<MyControllerWidget> {
         child: SizedBox(
           height: 34,
           child: Wrap(
+            clipBehavior: Clip.hardEdge,
             children: children,
           ),
         ),

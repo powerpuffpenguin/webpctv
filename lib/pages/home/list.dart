@@ -72,12 +72,14 @@ abstract class _State extends MyState<MyListPage> {
     checkAlive();
     final caption = await settings.getCaption();
     checkAlive();
+    final fontSize = await settings.getFontSize();
+    checkAlive();
     i = await settings.getPlayMode();
+    checkAlive();
     var playMode = PlayMode.list;
     if (i < PlayMode.values.length) {
       playMode = PlayMode.values[i];
     }
-    checkAlive();
 
     final access =
         await client.downloadAccess(device, cancelToken: cancelToken);
@@ -94,6 +96,7 @@ abstract class _State extends MyState<MyListPage> {
           access: access,
           mode: mode,
           caption: caption,
+          fontSize: fontSize,
           playMode: playMode,
           locked: false,
         ),

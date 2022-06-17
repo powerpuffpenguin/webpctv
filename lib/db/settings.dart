@@ -59,4 +59,23 @@ class MySettings {
   Future<void> setCaption(int val) => setInt('caption', val);
   Future<int> getPlayMode() => getInt('playMode');
   Future<void> setPlayMode(int val) => setInt('playMode', val);
+
+  Future<int> getFontSize() => getInt('fontSize');
+  Future<void> setFontSize(int val) => setInt('fontSize', val);
+  int? _fontSize;
+  postSetFontSize(int val) {
+    if (_fontSize != null) {
+      _fontSize = val;
+      return;
+    }
+    _fontSize = val;
+    setFontSize(val).whenComplete(() {
+      if (_fontSize == val) {
+        _fontSize = null;
+      } else if (_fontSize != null) {
+        final val = _fontSize!;
+        postSetFontSize(val);
+      }
+    });
+  }
 }

@@ -10,6 +10,7 @@ enum Mode {
   none,
   playlist,
   caption,
+  fontsize,
   // list loop single
   play,
   progress,
@@ -48,6 +49,7 @@ class UI {
     if (v) {
       resetSelected();
       progress = Progress.v0;
+      fontSizeSelected = _fontSize;
     }
   }
 
@@ -67,6 +69,17 @@ class UI {
   Progress progress = Progress.v0;
   final List<Source> videos;
   int caption = 0;
+  int _fontSize = 36;
+  int fontSizeSelected = 36;
+  int get fontSize => _fontSize;
+  set fontSize(val) {
+    _fontSize = val;
+    fontSizeSelected = val;
+  }
+
+  static const int maxFontSize = 72;
+  static const int minFontSize = 5;
+
   final Source source;
   int selected = 0;
   UI({

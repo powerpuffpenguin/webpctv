@@ -25,6 +25,7 @@ class MyVideoPage extends StatefulWidget {
     required this.caption,
     required this.playMode,
     required this.locked,
+    required this.fontSize,
   }) : super(key: key);
   final Client client;
   final int device;
@@ -39,6 +40,7 @@ class MyVideoPage extends StatefulWidget {
   final int caption;
   final PlayMode playMode;
   final bool locked;
+  final int fontSize;
 
   @override
   _MyVideoPageState createState() => _MyVideoPageState();
@@ -86,6 +88,10 @@ abstract class _State extends MyState<MyVideoPage> {
       m.mode = widget.mode;
       m.caption = widget.caption;
       m.play = widget.playMode;
+      if (widget.fontSize >= UI.minFontSize &&
+          widget.fontSize <= UI.maxFontSize) {
+        m.fontSize = widget.fontSize;
+      }
 
       _ui = m;
     }
@@ -96,6 +102,8 @@ abstract class _State extends MyState<MyVideoPage> {
   @override
   void initState() {
     super.initState();
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
+        overlays: [SystemUiOverlay.bottom]);
 
     playerController = VideoPlayerController.network(
       getURL(source.name),
@@ -134,6 +142,17 @@ abstract class _State extends MyState<MyVideoPage> {
           _listener();
         }
       });
+  }
+
+  @override
+  void dispose() {
+    SystemChrome.setEnabledSystemUIMode(
+      SystemUiMode.edgeToEdge,
+    );
+    cancelToken.cancel();
+    record.close();
+    playerController.dispose();
+    super.dispose();
   }
 
   void setCaption() {
@@ -223,6 +242,7 @@ abstract class _State extends MyState<MyVideoPage> {
                 showController: ui.show,
                 mode: ui.mode,
                 caption: ui.caption,
+                fontSize: ui.fontSize,
                 playMode: ui.play,
                 locked: ui.locked,
               ),
@@ -258,6 +278,7 @@ abstract class _State extends MyState<MyVideoPage> {
                 showController: ui.show,
                 mode: ui.mode,
                 caption: ui.caption,
+                fontSize: ui.fontSize,
                 playMode: ui.play,
                 locked: ui.locked,
               ),
@@ -271,14 +292,6 @@ abstract class _State extends MyState<MyVideoPage> {
     } finally {
       _replay = false;
     }
-  }
-
-  @override
-  void dispose() {
-    cancelToken.cancel();
-    record.close();
-    playerController.dispose();
-    super.dispose();
   }
 
   String getPath(String name) {
@@ -367,6 +380,16 @@ abstract class _State extends MyState<MyVideoPage> {
     }
     _seekToDuration(Duration.zero);
   }
+
+  _changedFontsize() {
+    final val = ui.fontSizeSelected;
+    if (val != ui.fontSize) {
+      setState(() {
+        ui.fontSize = val;
+        MySettings.instance.postSetFontSize(val);
+      });
+    }
+  }
 }
 
 class _MyVideoPageState extends _State with _KeyboardComponent {
@@ -449,6 +472,7 @@ class _MyVideoPageState extends _State with _KeyboardComponent {
                 });
               }
             },
+      onChangedFontsize: _changedFontsize,
     );
   }
 
@@ -484,6 +508,10 @@ class _MyVideoPageState extends _State with _KeyboardComponent {
               _buildController(context),
               ClosedCaption(
                 text: playerController.value.caption.text,
+                textStyle: Theme.of(context).textTheme.caption?.copyWith(
+                      fontSize: ui.fontSize.toDouble(),
+                      color: Colors.white,
+                    ),
               ),
               ui.show
                   ? VideoProgressIndicator(
@@ -548,6 +576,9 @@ mixin _KeyboardComponent on _State {
         break;
       case Mode.caption:
         break;
+      case Mode.fontsize:
+        _changedFontsize();
+        break;
       case Mode.progress:
         _seekProgress(ui.progress);
         break;
@@ -573,6 +604,9 @@ mixin _KeyboardComponent on _State {
       case Mode.caption:
         _changeCaption(right);
         break;
+      case Mode.fontsize:
+        _changeFontSize(right);
+        break;
       case Mode.progress:
         setState(() {
           ui.changeProgress(right);
@@ -589,6 +623,22 @@ mixin _KeyboardComponent on _State {
         setCaption();
         MySettings.instance.setCaption(val);
       });
+    }
+  }
+
+  _changeFontSize(bool right) {
+    if (right) {
+      if (ui.fontSizeSelected < UI.maxFontSize) {
+        setState(() {
+          ui.fontSizeSelected++;
+        });
+      }
+    } else {
+      if (ui.fontSizeSelected > UI.minFontSize) {
+        setState(() {
+          ui.fontSizeSelected--;
+        });
+      }
     }
   }
 }
