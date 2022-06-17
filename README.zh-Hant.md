@@ -5,7 +5,7 @@ android tv for webpc
 
 # webpctv 是什麼
 
-[webpc](https://github.com/powerpuffpenguin/webpc) 是本喵開發了一個開源遠程程式，其中包含的一個功能是可以在線播放受控端上的視頻。
+[webpc](https://github.com/powerpuffpenguin/webpc) 是本喵開發了一個開源遠控程式，其中包含的一個功能是可以在線播放受控端上的視頻。
 
 於是本喵想到可以將 webpc 作爲一個在線視頻源，然後在客廳的電視上使用遙控器來播放 webpc 提供的高清視頻將是一個再好不過的主意，於是本喵開發了 webpctv，它只有一個功能就是在智能電視上播放 webpc 提供的視頻以及記錄播放歷史以便可以將未看完視頻在下次繼續觀看。
 
@@ -49,7 +49,9 @@ android tv for webpc
 * none -> 沒有額外功能，遙控器按鈕和關閉菜單時提供相同的功能
 * playlist -> webpctv 會爲檔案夾下的所有視頻按照名稱排序建立一個播放列表，此菜單功能用於從播放列表中選取要播放的視頻
 * caption -> 與視頻擁有相同名稱前綴的外掛字幕可以被程式使用，此處可以設置要使用的字幕或關閉字幕
+* fontsize -> 設置字幕的字體大小
 * play -> 設置播放模式
+* progress -> 以 1/10 爲步長，創建了幾個快速調整播放進度的按鈕
 
 |播放模式|含義|
 |---|---|

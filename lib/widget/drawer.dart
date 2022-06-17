@@ -4,6 +4,7 @@ import 'package:bot_toast/bot_toast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:webpctv/db/data/account.dart';
 import 'package:webpctv/environment.dart';
@@ -67,7 +68,8 @@ abstract class _State extends MyState<MyDrawerView> {
               ..onTap = () async {
                 try {
                   debugPrint('launch $url');
-                  await launchUrlString(url);
+                  await launchUrlString(url,
+                      mode: LaunchMode.externalApplication);
                 } catch (e) {
                   BotToast.showText(text: '$e');
                 }
@@ -110,7 +112,7 @@ abstract class _State extends MyState<MyDrawerView> {
     try {
       const url = 'https://github.com/powerpuffpenguin/webpctv/issues';
       debugPrint('launch $url');
-      await launchUrlString(url);
+      await launchUrlString(url, mode: LaunchMode.externalApplication);
     } catch (e) {
       if (isNotClosed) {
         BotToast.showText(text: '$e');

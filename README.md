@@ -5,7 +5,7 @@ android tv for webpc
 
 # what is webpctv
 
-[webpc](https://github.com/powerpuffpenguin/webpc) is an open source remote program that I developed. One of the functions included is to play the video on the controlled end online.
+[webpc](https://github.com/powerpuffpenguin/webpc) is an open source remote control program that I developed. One of the functions included is to play the video on the controlled end online.
 
 So I thought that it would be a good idea to use webpc as an online video source, and then use the remote control to play the high-definition video provided by webpc on the TV in the living room, so I developed webpctv, which has only one function. Play the video provided by the webpc on the smart TV and record the playback history so that you can continue to watch the unfinished video next time.
 
@@ -49,7 +49,9 @@ The control menu provides several functions, use Up and Down to switch the funct
 * none -> No extra functions, remote buttons and closing menu provide the same function
 * playlist -> webpctv will create a playlist for all the videos in the folder sorted by name, this menu function is used to select the video to play from the playlist
 * caption -> External subtitles with the same name prefix as the video can be used by the program, here you can set the subtitles to be used or close the subtitles
+* fontsize -> Set the font size of subtitles
 * play -> Set play mode
+* progress -> Created several buttons to quickly adjust playback progress in steps of 1/10
 
 |play mode|describe|
 |---|---|
