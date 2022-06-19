@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 import 'package:webpctv/db/settings.dart';
 import 'package:webpctv/rpc/webapi/client.dart';
+import 'package:webpctv/service/wakelock_service.dart';
 import 'package:webpctv/widget/state.dart';
 import './controller.dart';
 import './values.dart';
@@ -353,6 +354,7 @@ abstract class _State extends MyState<MyVideoPage> {
       if (isNotClosed) {
         if (_seekTo == Duration.zero) {
           _seeking = false;
+          setState(() {});
         } else {
           final position = playerController.value.position;
           final to = position + _seekTo;
@@ -396,8 +398,14 @@ class _MyVideoPageState extends _State with _KeyboardComponent {
   @override
   void initState() {
     super.initState();
-
+    WakelockService.instance.enable();
     listenKeyUp(onKeyUp);
+  }
+
+  @override
+  void dispose() {
+    WakelockService.instance.disable();
+    super.dispose();
   }
 
   @override
@@ -473,6 +481,7 @@ class _MyVideoPageState extends _State with _KeyboardComponent {
               }
             },
       onChangedFontsize: _changedFontsize,
+      onChangedSeek: disabled ? null : seekPlay,
     );
   }
 
@@ -491,16 +500,6 @@ class _MyVideoPageState extends _State with _KeyboardComponent {
                       ui.phone = true;
                     }
                   }),
-          onHorizontalDragUpdate: disabled || ui.locked
-              ? null
-              : (details) {
-                  final v = details.delta.dx.toInt();
-                  if (v > 1) {
-                    seekPlay(true, duration: Duration(milliseconds: v * 100));
-                  } else if (details.delta.dx < -1) {
-                    seekPlay(false, duration: Duration(milliseconds: -v * 100));
-                  }
-                },
           child: Stack(
             alignment: Alignment.bottomCenter,
             children: <Widget>[

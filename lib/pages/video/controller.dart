@@ -14,6 +14,7 @@ class MyControllerWidget extends StatefulWidget {
     this.onChangedLocked,
     this.onChangedCaption,
     this.onChangedFontsize,
+    this.onChangedSeek,
   }) : super(key: key);
   final UI ui;
   final VideoPlayerController playerController;
@@ -22,6 +23,7 @@ class MyControllerWidget extends StatefulWidget {
   final VoidCallback? onChangedLocked;
   final ValueChanged<int>? onChangedCaption;
   final VoidCallback? onChangedFontsize;
+  final ValueChanged<bool>? onChangedSeek;
   @override
   _MyControllerWidgetState createState() => _MyControllerWidgetState();
 }
@@ -124,28 +126,54 @@ class _MyControllerWidgetState extends State<MyControllerWidget> {
         ),
       );
       if (ui.phone && !ui.locked) {
-        children.add(
-          Center(
-            child: value.isPlaying
-                ? MyIconWidget(
-                    icon: Icons.pause,
-                    fontSize: 72,
-                    onTab: () => controller.pause().then((value) {
-                      if (!_closed) {
-                        setState(() {});
-                      }
-                    }),
-                  )
-                : MyIconWidget(
-                    icon: Icons.play_arrow,
-                    fontSize: 72,
-                    onTab: () => controller.play().then((value) {
-                      if (!_closed) {
-                        setState(() {});
-                      }
-                    }),
-                  ),
-          ),
+        children.addAll(
+          <Widget>[
+            Center(
+              child: Transform.translate(
+                offset: const Offset(-120, 0),
+                child: MyIconWidget(
+                  icon: Icons.keyboard_arrow_left,
+                  fontSize: 58,
+                  onTab: widget.onChangedSeek == null
+                      ? null
+                      : () => widget.onChangedSeek!(false),
+                ),
+              ),
+            ),
+            Center(
+              child: value.isPlaying
+                  ? MyIconWidget(
+                      icon: Icons.pause,
+                      fontSize: 72,
+                      onTab: () => controller.pause().then((value) {
+                        if (!_closed) {
+                          setState(() {});
+                        }
+                      }),
+                    )
+                  : MyIconWidget(
+                      icon: Icons.play_arrow,
+                      fontSize: 72,
+                      onTab: () => controller.play().then((value) {
+                        if (!_closed) {
+                          setState(() {});
+                        }
+                      }),
+                    ),
+            ),
+            Center(
+              child: Transform.translate(
+                offset: const Offset(120, 0),
+                child: MyIconWidget(
+                  icon: Icons.keyboard_arrow_right,
+                  fontSize: 58,
+                  onTab: widget.onChangedSeek == null
+                      ? null
+                      : () => widget.onChangedSeek!(true),
+                ),
+              ),
+            ),
+          ],
         );
       }
     }
@@ -335,13 +363,10 @@ class _MyControllerWidgetState extends State<MyControllerWidget> {
     return Container(
       padding: const EdgeInsets.only(top: 60, left: 20, right: 20),
       alignment: Alignment.topCenter,
-      child: SizedBox(
-        height: 34,
-        child: Wrap(
-          alignment: WrapAlignment.center,
-          clipBehavior: Clip.hardEdge,
-          children: children,
-        ),
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        clipBehavior: Clip.hardEdge,
+        children: children,
       ),
     );
   }
