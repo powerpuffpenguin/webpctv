@@ -425,7 +425,7 @@ class _MyVideoPageState extends _State with _KeyboardComponent {
           alignment: Alignment.center,
           color: Colors.black,
           child: playerController.value.isInitialized
-              ? _buildVideo(context)
+              ? _buildBody(context)
               : _buildLoading(context),
         ),
       ),
@@ -485,41 +485,50 @@ class _MyVideoPageState extends _State with _KeyboardComponent {
     );
   }
 
+  Widget _buildBody(context) {
+    return GestureDetector(
+      onTap: disabled
+          ? null
+          : () => setState(() {
+                ui.show = !ui.show;
+                if (ui.show) {
+                  ui.phone = true;
+                }
+              }),
+      child: Container(
+        color: Colors.black,
+        child: Stack(
+          children: [
+            _buildVideo(context),
+            _buildController(context),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildVideo(BuildContext context) {
-    return Container(
-      alignment: Alignment.center,
-      color: Colors.black,
+    return Center(
       child: AspectRatio(
         aspectRatio: playerController.value.aspectRatio,
-        child: GestureDetector(
-          onTap: disabled
-              ? null
-              : () => setState(() {
-                    ui.show = !ui.show;
-                    if (ui.show) {
-                      ui.phone = true;
-                    }
-                  }),
-          child: Stack(
-            alignment: Alignment.bottomCenter,
-            children: <Widget>[
-              VideoPlayer(playerController),
-              _buildController(context),
-              ClosedCaption(
-                text: playerController.value.caption.text,
-                textStyle: Theme.of(context).textTheme.caption?.copyWith(
-                      fontSize: ui.fontSize.toDouble(),
-                      color: Colors.white,
-                    ),
-              ),
-              ui.show
-                  ? VideoProgressIndicator(
-                      playerController,
-                      allowScrubbing: !ui.locked,
-                    )
-                  : Container(),
-            ],
-          ),
+        child: Stack(
+          alignment: Alignment.bottomCenter,
+          children: <Widget>[
+            VideoPlayer(playerController),
+            ClosedCaption(
+              text: playerController.value.caption.text,
+              textStyle: Theme.of(context).textTheme.caption?.copyWith(
+                    fontSize: ui.fontSize.toDouble(),
+                    color: Colors.white,
+                  ),
+            ),
+            ui.show
+                ? VideoProgressIndicator(
+                    playerController,
+                    allowScrubbing: !ui.locked,
+                  )
+                : Container(),
+          ],
         ),
       ),
     );
