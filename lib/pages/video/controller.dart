@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:webpctv/pages/video/label.dart';
@@ -15,6 +17,7 @@ class MyControllerWidget extends StatefulWidget {
     this.onChangedCaption,
     this.onChangedFontsize,
     this.onChangedSeek,
+    this.onChangeProgress,
   }) : super(key: key);
   final UI ui;
   final VideoPlayerController playerController;
@@ -24,6 +27,7 @@ class MyControllerWidget extends StatefulWidget {
   final ValueChanged<int>? onChangedCaption;
   final VoidCallback? onChangedFontsize;
   final ValueChanged<bool>? onChangedSeek;
+  final VoidCallback? onChangeProgress;
   @override
   _MyControllerWidgetState createState() => _MyControllerWidgetState();
 }
@@ -186,39 +190,40 @@ class _MyControllerWidgetState extends State<MyControllerWidget> {
     return Container(
       padding: const EdgeInsets.only(top: 60, left: 20, right: 20),
       alignment: Alignment.topLeft,
-      child: SizedBox(
-        height: 34,
-        child: Wrap(
-          clipBehavior: Clip.hardEdge,
-          children: <Widget>[
-            MyIconWidget(
-              icon: Icons.keyboard_arrow_left_sharp,
-              padding: const EdgeInsets.symmetric(horizontal: 4.0),
-              onTab: () {
-                if (ui.fontSizeSelected > UI.minFontSize) {
-                  setState(() {
-                    ui.fontSizeSelected--;
-                  });
-                }
-              },
-            ),
-            MyLabelWidget(
+      child: Wrap(
+        clipBehavior: Clip.hardEdge,
+        children: <Widget>[
+          MyIconWidget(
+            icon: Icons.keyboard_arrow_left_sharp,
+            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+            onTab: () {
+              if (ui.fontSizeSelected > UI.minFontSize) {
+                setState(() {
+                  ui.fontSizeSelected--;
+                });
+              }
+            },
+          ),
+          Container(
+            padding: const EdgeInsets.only(left: 4, top: 1, right: 4),
+            child: MyLabelWidget(
+              fontSize: 28,
               label: '${ui.fontSizeSelected}',
               onTab: widget.onChangedFontsize,
             ),
-            MyIconWidget(
-              icon: Icons.keyboard_arrow_right_sharp,
-              padding: const EdgeInsets.symmetric(horizontal: 4.0),
-              onTab: () {
-                if (ui.fontSizeSelected < UI.maxFontSize) {
-                  setState(() {
-                    ui.fontSizeSelected++;
-                  });
-                }
-              },
-            ),
-          ],
-        ),
+          ),
+          MyIconWidget(
+            icon: Icons.keyboard_arrow_right_sharp,
+            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+            onTab: () {
+              if (ui.fontSizeSelected < UI.maxFontSize) {
+                setState(() {
+                  ui.fontSizeSelected++;
+                });
+              }
+            },
+          ),
+        ],
       ),
     );
   }
@@ -276,12 +281,9 @@ class _MyControllerWidgetState extends State<MyControllerWidget> {
       return Container(
         padding: padding,
         alignment: Alignment.topLeft,
-        child: SizedBox(
-          height: 34,
-          child: Wrap(
-            clipBehavior: Clip.hardEdge,
-            children: children,
-          ),
+        child: Wrap(
+          clipBehavior: Clip.hardEdge,
+          children: children,
         ),
       );
     }
@@ -376,7 +378,8 @@ class _MyControllerWidgetState extends State<MyControllerWidget> {
     if (!value.isInitialized) {
       return Container();
     }
-    var text = durationToString(Duration.zero);
+    const padding = EdgeInsets.only(top: 60, left: 40);
+    var text = '0/10 00:00';
     const values = Progress.values;
     for (var i = 1; i < values.length; i++) {
       if (ui.progress == values[i]) {
@@ -384,12 +387,49 @@ class _MyControllerWidgetState extends State<MyControllerWidget> {
         break;
       }
     }
+    if (ui.phone) {
+      return Container(
+        padding: padding,
+        alignment: Alignment.topLeft,
+        child: Wrap(
+          clipBehavior: Clip.hardEdge,
+          children: <Widget>[
+            MyIconWidget(
+              icon: Icons.keyboard_arrow_left_sharp,
+              padding: const EdgeInsets.symmetric(horizontal: 4.0),
+              onTab: () {
+                setState(() {
+                  ui.changeProgress(false);
+                });
+              },
+            ),
+            Container(
+              padding: const EdgeInsets.only(left: 4, top: 1, right: 4),
+              child: MyLabelWidget(
+                label: text,
+                fontSize: 28,
+                onTab: widget.onChangeProgress,
+              ),
+            ),
+            MyIconWidget(
+              icon: Icons.keyboard_arrow_right_sharp,
+              padding: const EdgeInsets.symmetric(horizontal: 4.0),
+              onTab: () {
+                setState(() {
+                  ui.changeProgress(true);
+                });
+              },
+            ),
+          ],
+        ),
+      );
+    }
     return Container(
-      padding: const EdgeInsets.only(top: 60, left: 40),
+      padding: padding,
       alignment: Alignment.topLeft,
       child: MyLabelWidget(
         label: text,
-        fontSize: 24,
+        fontSize: 28,
       ),
     );
   }

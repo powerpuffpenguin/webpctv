@@ -99,6 +99,7 @@ abstract class _State extends MyState<MyListPage> {
           fontSize: fontSize,
           playMode: playMode,
           locked: false,
+          phone: false,
         ),
       ),
     );

@@ -133,6 +133,7 @@ abstract class _State extends MyState<MyHistoryPage> {
           fontSize: fontSize,
           playMode: playMode,
           locked: false,
+          phone: false,
         ),
       ),
     );

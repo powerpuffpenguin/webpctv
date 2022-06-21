@@ -25,6 +25,7 @@ class MyVideoPage extends StatefulWidget {
     required this.mode,
     required this.caption,
     required this.playMode,
+    required this.phone,
     required this.locked,
     required this.fontSize,
   }) : super(key: key);
@@ -40,6 +41,7 @@ class MyVideoPage extends StatefulWidget {
   final Mode mode;
   final int caption;
   final PlayMode playMode;
+  final bool phone;
   final bool locked;
   final int fontSize;
 
@@ -85,6 +87,8 @@ abstract class _State extends MyState<MyVideoPage> {
         show: widget.showController,
         source: source,
         videos: videos,
+        locked: widget.locked,
+        phone: widget.phone,
       );
       m.mode = widget.mode;
       m.caption = widget.caption;
@@ -246,6 +250,7 @@ abstract class _State extends MyState<MyVideoPage> {
                 fontSize: ui.fontSize,
                 playMode: ui.play,
                 locked: ui.locked,
+                phone: ui.phone,
               ),
             ),
           );
@@ -282,6 +287,7 @@ abstract class _State extends MyState<MyVideoPage> {
                 fontSize: ui.fontSize,
                 playMode: ui.play,
                 locked: ui.locked,
+                phone: ui.phone,
               ),
             ),
           );
@@ -482,6 +488,7 @@ class _MyVideoPageState extends _State with _KeyboardComponent {
             },
       onChangedFontsize: _changedFontsize,
       onChangedSeek: disabled ? null : seekPlay,
+      onChangeProgress: disabled ? null : () => _seekProgress(ui.progress),
     );
   }
 

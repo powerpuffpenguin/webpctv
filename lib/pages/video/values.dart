@@ -36,8 +36,8 @@ enum Progress {
 class UI {
   bool _show;
   bool get show => _show;
-  bool phone = false;
-  bool locked = false;
+  bool phone;
+  bool locked;
   set show(bool v) {
     if (!v) {
       phone = false;
@@ -58,7 +58,7 @@ class UI {
   Mode get mode {
     final m = _mode;
     if (phone) {
-      if (m == Mode.none || m == Mode.progress) {
+      if (m == Mode.none) {
         return Mode.playlist;
       }
     }
@@ -84,6 +84,8 @@ class UI {
   int selected = 0;
   UI({
     required bool show,
+    required this.phone,
+    required this.locked,
     required this.source,
     required this.videos,
   }) : _show = show {
@@ -135,7 +137,7 @@ class UI {
 
   int changeMode(bool down) {
     const values = Mode.values;
-    final last = phone ? values.length - 2 : values.length - 1;
+    final last = values.length - 1;
     final min = phone ? 1 : 0;
     if (down) {
       for (var i = min; i < last; i++) {
