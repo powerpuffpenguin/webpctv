@@ -22,7 +22,6 @@ class Record {
           'slave_id': device.toString(),
           'root': root,
           'path': path,
-          'name': name,
         }).query;
   void close() {
     _closed = true;
@@ -35,11 +34,11 @@ class Record {
         return null;
       }
       final helper = helpers.seek;
-      final duration = await helper.get(_seek);
+      final duration = await helper.get(_seek, name);
       if (isClosed) {
         return null;
       }
-      if (duration != null && duration > const Duration(seconds: 20)) {
+      if (duration != null && duration > const Duration(seconds: 10)) {
         return duration;
       }
     } catch (e) {
@@ -52,7 +51,7 @@ class Record {
   Duration _lastTo = Duration.zero;
   bool _seeking = false;
   FutureOr<void> setSeek(Duration duration) async {
-    if (duration < const Duration(seconds: 20)) {
+    if (duration < const Duration(seconds: 10)) {
       return;
     }
     final diff = duration - _lastTo;
@@ -72,7 +71,7 @@ class Record {
         return null;
       }
       final helper = helpers.seek;
-      await helper.put(_seek, duration);
+      await helper.put(_seek, name, duration);
       _lastTo = duration;
     } catch (e) {
       debugPrint("setSeek error: $e");
