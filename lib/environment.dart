@@ -7,7 +7,7 @@ class MyEnvironment {
   static String get playStore =>
       'https://play.google.com/store/apps/details?id=$packageName';
 
-  static String version = "v0.1.0";
+  static String version = "v0.1.1";
 
   static bool get isProduct => const bool.fromEnvironment("dart.vm.product");
   static bool get isDebug => !isProduct;
