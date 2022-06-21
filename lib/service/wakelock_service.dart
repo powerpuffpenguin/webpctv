@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/material.dart';
 import 'package:wakelock/wakelock.dart';
 
 class WakelockService {
@@ -15,16 +16,23 @@ class WakelockService {
       Platform.isIOS ||
       Platform.isMacOS ||
       Platform.isWindows;
+  int _count = 0;
   void enable() {
     if (isSupported) {
-      _work = true;
+      _count++;
+      if (_count > 0) {
+        _work = true;
+      }
       _run();
     }
   }
 
   void disable() {
     if (isSupported) {
-      _work = false;
+      _count--;
+      if (_count < 1) {
+        _work = false;
+      }
       _run();
     }
   }
