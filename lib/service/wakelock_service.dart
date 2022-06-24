@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:wakelock/wakelock.dart';
 
 class WakelockService {
@@ -16,6 +18,7 @@ class WakelockService {
       Platform.isMacOS ||
       Platform.isWindows;
   int _count = 0;
+  bool _enable = false;
   void enable() {
     if (isSupported) {
       _count++;
@@ -47,9 +50,22 @@ class WakelockService {
         final work = _work!;
         _work = null;
         if (work) {
-          await Wakelock.enable();
+          if (!_enable) {
+            SystemChrome.setEnabledSystemUIMode(
+              SystemUiMode.manual,
+              overlays: [SystemUiOverlay.bottom],
+            );
+            _enable = true;
+            await Wakelock.enable();
+          }
         } else {
-          await Wakelock.disable();
+          if (_enable) {
+            SystemChrome.setEnabledSystemUIMode(
+              SystemUiMode.edgeToEdge,
+            );
+            _enable = false;
+            await Wakelock.disable();
+          }
         }
       }
     } finally {

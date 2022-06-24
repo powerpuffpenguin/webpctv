@@ -9,6 +9,7 @@ import 'package:webpctv/pages/video/values.dart';
 import 'package:webpctv/pages/video/video.dart';
 import 'package:webpctv/rpc/webapi/client.dart';
 import 'package:webpctv/rpc/webapi/fs.dart';
+import 'package:webpctv/service/wakelock_service.dart';
 import 'package:webpctv/widget/spin.dart';
 import 'package:webpctv/widget/state.dart';
 

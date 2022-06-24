@@ -107,8 +107,6 @@ abstract class _State extends MyState<MyVideoPage> {
   @override
   void initState() {
     super.initState();
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
-        overlays: [SystemUiOverlay.bottom]);
 
     playerController = VideoPlayerController.network(
       getURL(source.name),
@@ -151,9 +149,6 @@ abstract class _State extends MyState<MyVideoPage> {
 
   @override
   void dispose() {
-    SystemChrome.setEnabledSystemUIMode(
-      SystemUiMode.edgeToEdge,
-    );
     cancelToken.cancel();
     record.close();
     playerController.dispose();
